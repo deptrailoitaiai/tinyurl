@@ -20,7 +20,7 @@ CREATE DATABASE IF NOT EXISTS user_mgmt_service;
 
 USE url_service;
 
-CREATE TABLE url_urls (
+CREATE TABLE IF NOT EXISTS url_urls (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     user_id BIGINT,
     original_url TEXT NOT NULL,
@@ -40,7 +40,7 @@ CREATE TABLE url_urls (
 
 USE ana_batch_service;
 
-CREATE TABLE ana_batch_url_daily_stats (
+CREATE TABLE IF NOT EXISTS ana_batch_url_daily_stats (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     url_id BIGINT NOT NULL,
     date DATE NOT NULL,
@@ -54,14 +54,14 @@ CREATE TABLE ana_batch_url_daily_stats (
 
 USE ana_rt_service;
 
-CREATE TABLE ana_rt_devices (
+CREATE TABLE IF NOT EXISTS ana_rt_devices (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     device_type ENUM('desktop', 'mobile', 'tablet', 'other') NOT NULL,
     browser_name VARCHAR(100),
     os_name VARCHAR(100)
 );
 
-CREATE TABLE ana_rt_locations (
+CREATE TABLE IF NOT EXISTS ana_rt_locations (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     country_code VARCHAR(2),
     country_name VARCHAR(100),
@@ -69,7 +69,7 @@ CREATE TABLE ana_rt_locations (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE ana_rt_click_events (
+CREATE TABLE IF NOT EXISTS ana_rt_click_events (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     url_daily_stats_id BIGINT,
     ip_address VARCHAR(45),
@@ -87,7 +87,7 @@ CREATE TABLE ana_rt_click_events (
 
 USE user_mgmt_service;
 
-CREATE TABLE user_mgmt_users (
+CREATE TABLE IF NOT EXISTS user_mgmt_users (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
