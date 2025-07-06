@@ -69,10 +69,10 @@ run_schema() {
     
     print_status "INFO" "Running schema.sql on MySQL master..."
     print_status "INFO" "This will create the following databases:"
-    echo "  - url_service (URL shortening)"
-    echo "  - ana_batch_service (Analytics batch processing)"
-    echo "  - ana_rt_service (Analytics real-time)"
-    echo "  - user_mgmt_service (User management)"
+    echo "  - url_shortener_service (URL shortening)"
+    echo "  - analytics_batch_service (Analytics batch processing)"
+    echo "  - analytics_realtime_service (Analytics real-time)"
+    echo "  - user_management_service (User management)"
     echo
     
     # Execute the schema
@@ -90,7 +90,7 @@ verify_schema() {
     
     # Check databases
     print_status "INFO" "Checking databases..."
-    local databases=$(docker exec mysql-master mysql -uroot -proot123 -e "SHOW DATABASES;" | grep -E "(url_service|ana_batch_service|ana_rt_service|user_mgmt_service)")
+    local databases=$(docker exec mysql-master mysql -uroot -proot123 -e "SHOW DATABASES;" | grep -E "(url_shortener_service|analytics_batch_service|analytics_realtime_service|user_management_service)")
     
     if [ -z "$databases" ]; then
         print_status "ERROR" "No microservice databases found"
@@ -104,20 +104,20 @@ verify_schema() {
     print_status "INFO" "Checking tables..."
     
     echo
-    echo "=== URL SERVICE ==="
-    docker exec mysql-master mysql -uroot -proot123 -e "USE url_service; SHOW TABLES;"
+    echo "=== URL SHORTENER SERVICE ==="
+    docker exec mysql-master mysql -uroot -proot123 -e "USE url_shortener_service; SHOW TABLES;"
     
     echo
     echo "=== ANALYTICS BATCH SERVICE ==="
-    docker exec mysql-master mysql -uroot -proot123 -e "USE ana_batch_service; SHOW TABLES;"
+    docker exec mysql-master mysql -uroot -proot123 -e "USE analytics_batch_service; SHOW TABLES;"
     
     echo
     echo "=== ANALYTICS REALTIME SERVICE ==="
-    docker exec mysql-master mysql -uroot -proot123 -e "USE ana_rt_service; SHOW TABLES;"
+    docker exec mysql-master mysql -uroot -proot123 -e "USE analytics_realtime_service; SHOW TABLES;"
     
     echo
     echo "=== USER MANAGEMENT SERVICE ==="
-    docker exec mysql-master mysql -uroot -proot123 -e "USE user_mgmt_service; SHOW TABLES;"
+    docker exec mysql-master mysql -uroot -proot123 -e "USE user_management_service; SHOW TABLES;"
     
     print_status "SUCCESS" "Schema verification completed"
 }
@@ -131,7 +131,7 @@ check_replication() {
         sleep 3  # Give time for replication
         
         # Check if databases are replicated
-        local slave_databases=$(docker exec mysql-slave mysql -uroot -proot123 -e "SHOW DATABASES;" | grep -E "(url_service|ana_batch_service|ana_rt_service|user_mgmt_service)" | wc -l)
+        local slave_databases=$(docker exec mysql-slave mysql -uroot -proot123 -e "SHOW DATABASES;" | grep -E "(url_shortener_service|analytics_batch_service|analytics_realtime_service|user_management_service)" | wc -l)
         
         if [ "$slave_databases" -eq 4 ]; then
             print_status "SUCCESS" "All databases replicated to slave"
@@ -165,10 +165,10 @@ main() {
     echo "3. Run your applications using the created schema"
     echo
     echo "Database connection examples:"
-    echo "- URL Service: jdbc:mysql://localhost:3306/url_service"
-    echo "- Analytics Batch: jdbc:mysql://localhost:3306/ana_batch_service"
-    echo "- Analytics RT: jdbc:mysql://localhost:3306/ana_rt_service"
-    echo "- User Management: jdbc:mysql://localhost:3306/user_mgmt_service"
+    echo "- URL Shortener Service: jdbc:mysql://localhost:3306/url_shortener_service"
+    echo "- Analytics Batch Service: jdbc:mysql://localhost:3306/analytics_batch_service"
+    echo "- Analytics Realtime Service: jdbc:mysql://localhost:3306/analytics_realtime_service"
+    echo "- User Management Service: jdbc:mysql://localhost:3306/user_management_service"
 }
 
 # Execute main function

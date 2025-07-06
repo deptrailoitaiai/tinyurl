@@ -49,6 +49,25 @@ docker ps --filter "name=mysql" --format "table {{.Names}}\t{{.Status}}\t{{.Port
 - Sample data trong `locations` và `devices`
 - Triggers và stored procedures
 
+#### 5. **Tạo Indexes trên Slave Database (Tối ưu Read Performance)**
+```bash
+# Chạy script tạo indexes trên slave database
+./run-indexes.sh localhost 3308 root
+
+# Hoặc với password
+./run-indexes.sh localhost 3308 root your_password
+```
+
+**⚠️ LƯU Ý QUAN TRỌNG:**
+- File `schema.sql`: Chỉ chứa database, tables, columns - dành cho PRIMARY database
+- File `indexes.sql`: Chứa tất cả indexes - chỉ chạy trên SLAVE database
+- Việc tách indexes giúp tối ưu write performance trên primary và read performance trên slave
+
+**Lợi ích của việc tách indexes:**
+- Primary database: Write nhanh hơn do không có indexes (trừ UNIQUE constraints cần thiết)
+- Slave database: Read nhanh hơn với đầy đủ indexes
+- Giảm lag time trong replication
+
 ### 🔧 Manual Commands (Tùy chọn)
 
 #### **Kết nối vào MySQL:**
