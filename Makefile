@@ -2,7 +2,22 @@
 
 # Default target
 .DEFAULT_GOAL := help
-.PHONY: help clear-complete clear-unused clear-system-all clear-project-only clear-container-all clear-volume-all clear-image-all clear-all restart-clean
+.PHONY: help clear-complete clear-unused clear-system-all clear-project-only clear-container-all clear-volume-all clear-image-all clear-all restart-clean start logs init-logs
+
+# === STARTUP COMMANDS ===
+start:
+	@echo "Starting all services with Docker Compose..."
+	docker-compose up -d
+	@echo "All services started, including automated database initialization."
+	@echo "Use 'make init-logs' to monitor the initialization process."
+
+init-logs:
+	@echo "Showing logs from the init-runner container..."
+	docker logs -f init-runner
+
+logs:
+	@echo "Showing logs from all containers..."
+	docker-compose logs -f
 
 # === CLEANUP COMMANDS ===
 

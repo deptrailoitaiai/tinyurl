@@ -131,7 +131,7 @@ services:
       - ./configs/mysql/master:/docker-entrypoint-initdb.d:ro # [important] - Init scripts for replication setup
       - ./configs/mysql/master/my.cnf:/etc/mysql/conf.d/my.cnf:ro # [important] - Master configuration file
       - mysql_master_data:/var/lib/mysql # [important] - Persistent data storage
-    command: --default-authentication-plugin=mysql_native_password --log-error-verbosity=3 # [important] - MySQL 8.0 compatibility settings
+    command: --default-authentication-plugin=mysql_native_password --log-error-verbosity=3 --gtid-mode=ON --enforce-gtid-consistency=ON --server-id=1 # [important] - MySQL 8.0 compatibility settings with GTID mode enabled and explicit server-id
     networks: 
       - mysql-net # [important] - Internal network for master-slave communication
       - shared-net # [optional] - Shared network for other services
@@ -158,7 +158,7 @@ services:
       - ./configs/mysql/slave:/docker-entrypoint-initdb.d:ro # [fixed] - Updated slave init scripts for manual replication setup
       - ./configs/mysql/slave/my.cnf:/etc/mysql/conf.d/my.cnf:ro # [important] - Slave configuration file
       - mysql_slave_data:/var/lib/mysql # [important] - Separate persistent data storage
-    command: --default-authentication-plugin=mysql_native_password --log-error-verbosity=3 # [important] - Same MySQL settings as master
+    command: --default-authentication-plugin=mysql_native_password --log-error-verbosity=3 --gtid-mode=ON --enforce-gtid-consistency=ON --server-id=2 # [important] - Same MySQL settings as master with GTID mode enabled and different server-id
     networks:
       - mysql-net # [important] - Same network as master for communication
       - shared-net # [optional] - Shared network for other services
@@ -180,6 +180,34 @@ services:
       - redis_data:/data
     restart: unless-stopped
     command: redis-server --appendonly yes
+    networks:
+      - shared-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Init Runner - Handles replication setup and schema initialization
+  init-runner:
+    build: 
+      context: ./init-runner
+      dockerfile: Dockerfile
+    container_name: init-runner
+    restart: "no"
+    volumes:
+      - ./init-runner/scripts:/scripts
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+      mysql-slave:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - mysql-net
+      - shared-net
 
 volumes:
   kafka_data_1:

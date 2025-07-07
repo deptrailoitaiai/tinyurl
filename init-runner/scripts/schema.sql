@@ -149,5 +149,3 @@ CREATE TABLE `service_references` (
 -- INSERT INTO `service_references` (`local_id`, `local_table`, `target_id`, `target_table`) 
 -- VALUES (1, 'click_events', 1, 'urls'),
 --        (2, 'click_events', 1, 'urls');
-
-
