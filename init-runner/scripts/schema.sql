@@ -34,14 +34,12 @@ CREATE TABLE `urls` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `user_id` BIGINT NULL, -- Tham chiếu đến `users.id` trong `user_management_service`
     `original_url` TEXT NOT NULL,
-    `short_code` VARCHAR(20) NOT NULL,
     `title` VARCHAR(500) NULL,
     `password_hash` VARCHAR(255) NULL,
     `status` ENUM('active', 'expired', 'disabled') NULL DEFAULT 'active',
     `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    `expires_at` TIMESTAMP NULL,
-    UNIQUE KEY `urls_short_code_unique` (`short_code`)
+    `expires_at` TIMESTAMP NULL
 );
 
 -- Bảng quản lý tham chiếu cross-service (tối giản)
@@ -123,7 +121,6 @@ CREATE TABLE `devices` (
 CREATE TABLE `click_events` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     `url_id` BIGINT NOT NULL, -- Tham chiếu đến `urls.id` trong `url_shortener_service`
-    `short_code` VARCHAR(20) NOT NULL, -- Duplicate từ `urls` để tối ưu query
     `ip_address` VARCHAR(45) NULL,
     `referrer` VARCHAR(500) NULL,
     `device_id` BIGINT NULL,

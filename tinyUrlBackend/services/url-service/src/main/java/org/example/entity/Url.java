@@ -6,7 +6,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 
 @Entity
 @Table(name = "urls")
@@ -25,9 +27,6 @@ public class Url {
 
     @Column(name = "original_url", nullable = false, columnDefinition = "TEXT")
     private String originalUrl;
-
-    @Column(name = "short_code", length = 20, nullable = false, unique = true)
-    private String shortCode;
 
     @Column(name = "title", length = 500)
     private String title;
@@ -51,13 +50,14 @@ public class Url {
 
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
+        LocalDateTime nowUtc = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
+        createdAt = nowUtc;
+        updatedAt = nowUtc;
     }
 
     @PreUpdate
     protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
+        updatedAt = LocalDateTime.ofInstant(Instant.now(), ZoneOffset.UTC);
     }
 
     public enum UrlStatus {

@@ -124,7 +124,7 @@ services:
       # MYSQL_DATABASE: tinyurl # [removed] - No default database creation, will be created later and replicated
       MYSQL_REPLICATION_USER: repl # [important] - Replication user for slave connection
       MYSQL_REPLICATION_PASSWORD: repl123 # [important] - Replication password
-      TZ: Asia/Ho_Chi_Minh # [optional] - Timezone setting
+      TZ: UTC # [changed] - Using UTC timezone for consistent timestamps
     ports:
       - "3307:3306" # [important] - External port mapping for master access
     volumes:
@@ -151,7 +151,7 @@ services:
       MYSQL_REPLICATION_USER: repl # [important] - Must match master replication user
       MYSQL_REPLICATION_PASSWORD: repl123 # [important] - Must match master replication password
       MYSQL_MASTER_HOST: mysql-master # [important] - Master hostname for replication connection
-      TZ: Asia/Ho_Chi_Minh # [optional] - Same timezone as master
+      TZ: UTC # [changed] - Using UTC timezone for consistent timestamps
     ports:
       - "3308:3306" # [important] - Different external port from master
     volumes:
