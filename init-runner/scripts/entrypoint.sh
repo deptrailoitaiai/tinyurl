@@ -69,17 +69,40 @@ echo "- analytics_batch_service: url_daily_stats, service_references tables"
 echo "- analytics_realtime_service: click_events, devices, locations, service_references tables"
 echo
 
-# Chạy script thiết lập replication
-print_status "INFO" "Running replication setup..."
-bash "$SETUP_REPLICATION_SCRIPT"
+# Kiểm tra xem replication đã được setup chưa
+print_status "INFO" "Checking if replication is already configured..."
+SLAVE_STATUS=$(mysql -h mysql-slave -u root -proot123 -e "SHOW REPLICA STATUS\G" 2>/dev/null || mysql -h mysql-slave -u root -proot123 -e "SHOW SLAVE STATUS\G" 2>/dev/null || echo "")
 
-# Chạy script khởi tạo schema
-print_status "INFO" "Running schema setup..."
-bash "$SCHEMA_SCRIPT"
+if echo "$SLAVE_STATUS" | grep -q "Source_Host: mysql-master\|Master_Host: mysql-master"; then
+    print_status "INFO" "Replication is already configured, skipping replication setup"
+else
+    print_status "INFO" "Running replication setup..."
+    bash "$SETUP_REPLICATION_SCRIPT"
+fi
+
+# Kiểm tra xem schema đã được tạo chưa
+print_status "INFO" "Checking if schema is already initialized..."
+SCHEMA_EXISTS=$(mysql -h mysql-master -u root -proot123 -e "SHOW DATABASES LIKE 'url_shortener_service';" | grep -c "url_shortener_service" || echo "0")
+
+if [ "$SCHEMA_EXISTS" -gt 0 ]; then
+    print_status "INFO" "Schema already exists, skipping schema creation"
+else
+    print_status "INFO" "Running schema setup..."
+    bash "$SCHEMA_SCRIPT"
+fi
 
 print_status "SUCCESS" "Initialization completed successfully at: $(date)"
+
+# Tạo status file để đánh dấu đã hoàn thành
+if [ -n "$INIT_STATUS_FILE" ]; then
+    echo "$(date): Initialization completed successfully" > "$INIT_STATUS_FILE"
+    print_status "INFO" "Status file created at: $INIT_STATUS_FILE"
+fi
 
 # Giữ container chạy để có thể check logs
 print_status "INFO" "Initialization container will remain running for log inspection"
 print_status "INFO" "Use 'docker logs init-runner' to view the complete logs"
-tail -f /dev/null
+print_status "INFO" "Container will exit in 60 seconds to save resources"
+
+# Thay vì chạy mãi, thoát sau 60 giây để tiết kiệm tài nguyên
+sleep 60
