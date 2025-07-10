@@ -7,6 +7,7 @@ import org.example.service.UrlService;
 import org.example.service.data.ShorteningUrl_I_Data;
 import org.example.service.data.ShorteningUrl_O_Data;
 import org.example.util.Base62Util;
+import org.example.util.HashAndCompareUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,7 @@ public class UrlServiceImpl implements UrlService {
     public ShorteningUrl_O_Data shorteningUrl(ShorteningUrl_I_Data inputData) {
         ShorteningUrl_O_Data ret = new ShorteningUrl_O_Data();
 
-        //hash password
+        inputData.setPassword(HashAndCompareUtil.hash(inputData.getPassword()));
 
         Url newUrl = Url.builder()
                 .userId(inputData.getUserId())
