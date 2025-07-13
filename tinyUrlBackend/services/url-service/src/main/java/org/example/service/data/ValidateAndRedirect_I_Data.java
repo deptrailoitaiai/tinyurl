@@ -5,16 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ShorteningUrl_O_Data {
-    String originalUrl;
+public class ValidateAndRedirect_I_Data {
     String shortCode;
-    String title;
-    LocalDateTime createdAt;
-    LocalDateTime expiredDate;
+    String password;
 }

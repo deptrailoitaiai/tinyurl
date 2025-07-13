@@ -32,7 +32,6 @@ USE url_shortener_service;
 -- Bảng lưu trữ các URL
 CREATE TABLE `urls` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `user_id` BIGINT NULL, -- Tham chiếu đến `users.id` trong `user_management_service`
     `original_url` TEXT NOT NULL,
     `title` VARCHAR(500) NULL,
     `password_hash` VARCHAR(255) NULL,
@@ -69,7 +68,6 @@ USE analytics_batch_service;
 -- Bảng thống kê số lượt click mỗi ngày cho mỗi URL
 CREATE TABLE `url_daily_stats` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `url_id` BIGINT NOT NULL, -- Tham chiếu đến `urls.id` trong `url_shortener_service`
     `date` DATE NOT NULL,
     `click_count` BIGINT NOT NULL DEFAULT 0,
     `last_processed_click_id` BIGINT NULL, -- Track click cuối cùng đã xử lý
@@ -120,7 +118,6 @@ CREATE TABLE `devices` (
 -- Bảng ghi nhận sự kiện click
 CREATE TABLE `click_events` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `url_id` BIGINT NOT NULL, -- Tham chiếu đến `urls.id` trong `url_shortener_service`
     `ip_address` VARCHAR(45) NULL,
     `referrer` VARCHAR(500) NULL,
     `device_id` BIGINT NULL,
