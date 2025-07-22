@@ -1,6 +1,7 @@
 package org.example.service.impl;
 
 import org.example.entity.Url;
+import org.example.repository.master.UrlMasterRepository;
 import org.example.repository.slave.UrlSlaveRepository;
 import org.example.service.data.GetUrlInfoById_I_Data;
 import org.example.service.data.GetUrlInfoById_O_Data;
@@ -17,6 +18,9 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
 
     @Autowired
     private UrlSlaveRepository urlSlaveRepository;
+
+    @Autowired
+    private UrlMasterRepository urlMasterRepository;
 
     @Override
     public GetUrlInfoById_O_Data getUrlInfoById(GetUrlInfoById_I_Data inputData) {
@@ -47,6 +51,16 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
     @Override
     public UpdateUrlInfo_O_Data updateUrlInfo(UpdateUrlInfo_I_Data inputData) {
         UpdateUrlInfo_O_Data ret = new UpdateUrlInfo_O_Data();
+
+        Long urlId = Base62Util.base62ToId(inputData.getShortCode());
+
+        Optional<Url> getOptionalUrl = urlSlaveRepository.findById(urlId);
+
+        if(getOptionalUrl.isEmpty()) {
+            
+        }
+
+        Url getUrl = getOptionalUrl.get();
 
         return ret;
     }
