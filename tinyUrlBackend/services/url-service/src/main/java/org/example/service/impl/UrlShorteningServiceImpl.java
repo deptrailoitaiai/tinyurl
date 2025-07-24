@@ -10,10 +10,14 @@ import org.example.service.data.*;
 import org.example.util.Base62Util;
 import org.example.util.HashAndCompareUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 @Service("UrlShorteningServiceImpl")
 public class UrlShorteningServiceImpl implements UrlShorteningService {
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
     private UrlMasterRepository urlMasterRepository;

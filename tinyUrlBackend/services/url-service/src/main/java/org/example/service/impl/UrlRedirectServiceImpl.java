@@ -12,12 +12,16 @@ import org.example.service.data.RedirectWithoutPassword_O_Data;
 import org.example.util.Base62Util;
 import org.example.util.HashAndCompareUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service("UrlRedirectServiceImpl")
 public class UrlRedirectServiceImpl implements UrlRedirectService {
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
     private UrlSlaveRepository urlSlaveRepository;

@@ -9,12 +9,16 @@ import org.example.service.data.UpdateUrlInfo_I_Data;
 import org.example.service.data.UpdateUrlInfo_O_Data;
 import org.example.util.Base62Util;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service("UrlManagementServiceImpl")
 public class UrlManagementServiceImpl implements org.example.service.UrlManagementService {
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
     private UrlSlaveRepository urlSlaveRepository;
@@ -57,7 +61,7 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
         Optional<Url> getOptionalUrl = urlSlaveRepository.findById(urlId);
 
         if(getOptionalUrl.isEmpty()) {
-            
+
         }
 
         Url getUrl = getOptionalUrl.get();
