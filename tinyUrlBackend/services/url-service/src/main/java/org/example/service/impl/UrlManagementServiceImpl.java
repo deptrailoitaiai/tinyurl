@@ -12,7 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service("UrlManagementServiceImpl")
 public class UrlManagementServiceImpl implements org.example.service.UrlManagementService {
@@ -25,6 +28,9 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
 
     @Autowired
     private UrlMasterRepository urlMasterRepository;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Override
     public GetUrlInfoById_O_Data getUrlInfoById(GetUrlInfoById_I_Data inputData) {
@@ -56,16 +62,39 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
     public UpdateUrlInfo_O_Data updateUrlInfo(UpdateUrlInfo_I_Data inputData) {
         UpdateUrlInfo_O_Data ret = new UpdateUrlInfo_O_Data();
 
+        // 1. try lock
+        String uuidLock = UUID.randomUUID().toString();
+        boolean lock = tryLock(inputData.getShortCode(), uuidLock);
+        // TODO: if cant lock ???
+
+        // 2. get id by short code, find by id
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
 
         Optional<Url> getOptionalUrl = urlSlaveRepository.findById(urlId);
 
-        if(getOptionalUrl.isEmpty()) {
+        if (getOptionalUrl.isEmpty()) {
 
         }
 
         Url getUrl = getOptionalUrl.get();
 
         return ret;
+    }
+
+    private boolean tryLock(String shortCode, String uuid) {
+        String lockKey = "updateUrlInfoLock" + shortCode;
+
+        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, uuid, Duration.ofSeconds(30)));
+    }
+
+    private boolean releaseLock(String shortCode, String uuid) {
+        String lockKey = "updateUrlInfoLock" + shortCode;
+
+        String valueOfLock = redisTemplate.opsForValue().get(lockKey);
+        if(Objects.equals(uuid, valueOfLock)) {
+            return Boolean.TRUE.equals(redisTemplate.delete(lockKey));
+        }
+
+        return false;
     }
 }
