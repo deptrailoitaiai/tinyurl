@@ -1,14 +1,10 @@
 package org.example.service.impl;
 
+import org.example.constants.ErrorCode;
 import org.example.entity.Url;
-import org.example.repository.master.ServiceReferenceMasterRepository;
-import org.example.repository.master.UrlMasterRepository;
 import org.example.repository.slave.UrlSlaveRepository;
 import org.example.service.UrlRedirectService;
-import org.example.service.data.RedirectWithPassword_I_Data;
-import org.example.service.data.RedirectWithPassword_O_Data;
-import org.example.service.data.RedirectWithoutPassword_I_Data;
-import org.example.service.data.RedirectWithoutPassword_O_Data;
+import org.example.service.data.*;
 import org.example.util.Base62Util;
 import org.example.util.HashAndCompareUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,39 +26,38 @@ public class UrlRedirectServiceImpl implements UrlRedirectService {
     public RedirectWithPassword_O_Data redirectWithPassword(RedirectWithPassword_I_Data inputData) {
         RedirectWithPassword_O_Data ret = new RedirectWithPassword_O_Data();
 
-        // 1. get id from short code, find by id
+        // 1. Get URL by short code directly from slave repository
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
         Optional<Url> optionalUrl = urlSlaveRepository.findById(urlId);
 
         if (optionalUrl.isEmpty()) {
-            ret.setValidated(false);
+            ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
             return ret;
         }
 
         Url url = optionalUrl.get();
 
         // 2. Check URL's status
-        if (url.getStatus() == Url.UrlStatus.expired || url.getStatus() == Url.UrlStatus.disabled) {
-            ret.setValidated(false);
+        if (url.getStatus().equals(Url.UrlStatus.EXPIRED) || url.getStatus().equals(Url.UrlStatus.DISABLED)) {
+            ret.setErrorCode((url.getStatus() == Url.UrlStatus.EXPIRED) ? ErrorCode.URL_EXPIRED : ErrorCode.URL_DISABLED);
             return ret;
         }
 
         // 3. Check password if URL is password protected
-        // separate 2 if block cuz it could cause null pointer exception
         if (url.getPasswordHash() == null) {
-            ret.setValidated(true);
+            ret.setErrorCode(ErrorCode.SUCCESS);
             ret.setOriginUrl(url.getOriginalUrl());
             return ret;
         }
 
         if (!HashAndCompareUtil.compare(inputData.getPassword(), url.getPasswordHash())) {
-            ret.setValidated(false);
+            ret.setErrorCode(ErrorCode.PASSWORD_IN_CORRECT);
             return ret;
         }
 
         // 4. return
         ret.setOriginUrl(url.getOriginalUrl());
-        ret.setValidated(true);
+        ret.setErrorCode(ErrorCode.SUCCESS);
 
         return ret;
     }
@@ -71,33 +66,33 @@ public class UrlRedirectServiceImpl implements UrlRedirectService {
     public RedirectWithoutPassword_O_Data redirectWithoutPassword(RedirectWithoutPassword_I_Data inputData) {
         RedirectWithoutPassword_O_Data ret = new RedirectWithoutPassword_O_Data();
 
-        // 1. get id from short code, find by id
+        // 1. Get URL by short code directly from slave repository
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
-
         Optional<Url> optionalUrl = urlSlaveRepository.findById(urlId);
 
-        // 2. check url status
         if (optionalUrl.isEmpty()) {
-            ret.setUrlAvailable(false);
+            ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
             return ret;
         }
 
         Url url = optionalUrl.get();
 
-        if (url.getStatus() == Url.UrlStatus.expired || url.getStatus() == Url.UrlStatus.disabled) {
-            ret.setUrlAvailable(false);
+        // 2. Check URL status
+        if (url.getStatus().equals(Url.UrlStatus.EXPIRED) || url.getStatus().equals(Url.UrlStatus.DISABLED)) {
+            ret.setErrorCode((url.getStatus() == Url.UrlStatus.EXPIRED) ? ErrorCode.URL_EXPIRED : ErrorCode.URL_DISABLED);
             return ret;
         }
 
-        // 3. check if url got password -> redirect to "redirectWithPassword"
+        // 3. Check if URL has password
         if (url.getPasswordHash() != null) {
-            ret.setNeedPassword(true);
+            ret.setErrorCode(ErrorCode.PASSWORD_REQUIRED);
             ret.setShortCode(inputData.getShortCode());
             return ret;
         }
 
         // 4. return
         ret.setOriginalUrl(url.getOriginalUrl());
+        ret.setErrorCode(ErrorCode.SUCCESS);
         return ret;
     }
 }

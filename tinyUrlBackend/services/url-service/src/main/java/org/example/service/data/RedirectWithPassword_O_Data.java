@@ -4,12 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.constants.ErrorCode;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class RedirectWithPassword_O_Data {
+    ErrorCode errorCode;
     String originUrl;
-    boolean validated;
 }

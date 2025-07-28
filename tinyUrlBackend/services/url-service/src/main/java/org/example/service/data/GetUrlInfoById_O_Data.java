@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.constants.ErrorCode;
 import org.example.entity.Url;
 
 import java.time.LocalDateTime;
@@ -13,9 +14,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class GetUrlInfoById_O_Data {
-    boolean urlFound;
+    ErrorCode errorCode;
     String originalUrl;
     String title;
+    String passwordHash;
     Url.UrlStatus status;
     LocalDateTime createdAt;
     LocalDateTime lastUpdate;

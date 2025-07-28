@@ -4,7 +4,6 @@ import org.example.entity.ServiceReference;
 import org.example.entity.Url;
 import org.example.repository.master.ServiceReferenceMasterRepository;
 import org.example.repository.master.UrlMasterRepository;
-import org.example.repository.slave.UrlSlaveRepository;
 import org.example.service.UrlShorteningService;
 import org.example.service.data.*;
 import org.example.util.Base62Util;
@@ -35,14 +34,15 @@ public class UrlShorteningServiceImpl implements UrlShorteningService {
             hashedPassword = HashAndCompareUtil.hash(inputData.getPassword());
         }
 
-        // 2. save url
-        Url newUrl = Url.builder()
-                .originalUrl(inputData.getOriginalUrl())
-                .title(inputData.getTitle())
-                .passwordHash(hashedPassword)
-                .expiresAt(inputData.getExpiredDate())
-                .build();
-
+        // 2. create URL directly using master repository
+        Url newUrl = new Url();
+        newUrl.setOriginalUrl(inputData.getOriginalUrl());
+        newUrl.setTitle(inputData.getTitle());
+        newUrl.setPasswordHash(hashedPassword);
+        if (inputData.getExpiredDate() != null) {
+            newUrl.setExpiresAt(inputData.getExpiredDate());
+        }
+        
         Url savedUrl = urlMasterRepository.save(newUrl);
 
         // 3. save reference key to service_reference using another thread
@@ -63,10 +63,8 @@ public class UrlShorteningServiceImpl implements UrlShorteningService {
         });
         threadSaveNewReference.start();
 
-        // 4. generate short code from url id
+        // 4. return response
         String shortCode = Base62Util.idToBase62(savedUrl.getId());
-
-        // 5. return
         ret.setOriginalUrl(savedUrl.getOriginalUrl());
         ret.setTitle(savedUrl.getTitle());
         ret.setShortCode(shortCode);

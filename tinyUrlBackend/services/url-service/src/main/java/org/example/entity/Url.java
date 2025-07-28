@@ -34,7 +34,7 @@ public class Url {
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     @Builder.Default
-    private UrlStatus status = UrlStatus.active;
+    private UrlStatus status = UrlStatus.ACTIVE;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -58,6 +58,6 @@ public class Url {
     }
 
     public enum UrlStatus {
-        active, expired, disabled
+        ACTIVE, EXPIRED, DISABLED
     }
 }
