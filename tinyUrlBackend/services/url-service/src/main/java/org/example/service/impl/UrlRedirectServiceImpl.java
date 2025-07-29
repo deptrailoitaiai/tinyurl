@@ -17,7 +17,7 @@ import java.util.Optional;
 public class UrlRedirectServiceImpl implements UrlRedirectService {
 
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private StringRedisTemplate redisTemplate;
 
     @Autowired
     private UrlSlaveRepository urlSlaveRepository;

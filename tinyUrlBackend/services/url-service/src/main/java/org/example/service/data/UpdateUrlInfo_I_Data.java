@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.entity.Url;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +16,6 @@ public class UpdateUrlInfo_I_Data {
     String shortCode;
     String title;
     String password;
-    String status;
+    Url.UrlStatus status;
     LocalDateTime expiredAt;
 }

@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 public class UrlShorteningServiceImpl implements UrlShorteningService {
 
     @Autowired
-    private StringRedisTemplate stringRedisTemplate;
+    private StringRedisTemplate redisTemplate;
 
     @Autowired
     private UrlMasterRepository urlMasterRepository;

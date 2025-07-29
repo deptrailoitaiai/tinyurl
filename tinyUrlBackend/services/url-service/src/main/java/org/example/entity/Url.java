@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -12,6 +13,7 @@ import java.time.ZoneOffset;
 
 @Entity
 @Table(name = "urls")
+@DynamicUpdate
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

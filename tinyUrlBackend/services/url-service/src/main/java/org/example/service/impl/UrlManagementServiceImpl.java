@@ -1,5 +1,6 @@
 package org.example.service.impl;
 
+import jakarta.transaction.Transactional;
 import org.example.constants.ErrorCode;
 import org.example.entity.Url;
 import org.example.repository.master.UrlMasterRepository;
@@ -18,9 +19,6 @@ import java.util.UUID;
 
 @Service("UrlManagementServiceImpl")
 public class UrlManagementServiceImpl implements org.example.service.UrlManagementService {
-
-    @Autowired
-    private StringRedisTemplate stringRedisTemplate;
 
     @Autowired
     private UrlSlaveRepository urlSlaveRepository;
@@ -60,13 +58,18 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
     }
 
     @Override
+    @Transactional
     public UpdateUrlInfo_O_Data updateUrlInfo(UpdateUrlInfo_I_Data inputData) {
         UpdateUrlInfo_O_Data ret = new UpdateUrlInfo_O_Data();
 
         // 1. try lock
         String uuidLock = UUID.randomUUID().toString();
-        boolean lock = tryLock(inputData.getShortCode(), uuidLock);
-        // TODO: if cant lock ???
+        boolean canLock = tryLock(inputData.getShortCode(), uuidLock);
+
+        if (!canLock) {
+            ret.setErrorCode(ErrorCode.SYSTEM_ERROR);
+            return ret;
+        }
 
         // 2. get id by short code, find by id
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
@@ -79,6 +82,23 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
         }
 
         Url getUrl = getOptionalUrl.get();
+
+        // 3. set changed field and update with @DynamicUpdate (include hash password before update)
+        getUrl.setTitle(inputData.getTitle() == null ? getUrl.getTitle() : inputData.getTitle());
+        getUrl.setPasswordHash(inputData.getPassword() == null ? getUrl.getPasswordHash() : HashAndCompareUtil.hash(inputData.getPassword()));
+        getUrl.setStatus(inputData.getStatus() == null ? getUrl.getStatus() : inputData.getStatus());
+        getUrl.setExpiresAt(inputData.getExpiredAt() == null ? getUrl.getExpiresAt() : inputData.getExpiredAt());
+
+        // 4. release lock
+        boolean releaseLock = releaseLock(inputData.getShortCode(), uuidLock);
+
+        ret.setErrorCode(ErrorCode.SUCCESS);
+        ret.setShortCode(inputData.getShortCode());
+        ret.setOriginalUrl(getUrl.getOriginalUrl());
+        ret.setTitle(getUrl.getTitle());
+        ret.setStatus(getUrl.getStatus());
+        ret.setUpdateAt(getUrl.getUpdatedAt());
+        ret.setExpireAt(getUrl.getExpiresAt());
 
         return ret;
     }
@@ -126,8 +146,21 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
 
     private boolean tryLock(String shortCode, String uuid) {
         String lockKey = "updateUrlInfoLock" + shortCode;
+        boolean lockAcquired = false;
+        int maxRetries = 3;
+        int retryCount = 0;
 
-        return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, uuid, Duration.ofSeconds(30)));
+        while (!lockAcquired && retryCount < maxRetries) {
+            lockAcquired = Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, uuid, Duration.ofSeconds(30)));
+
+            if (lockAcquired) {
+                return lockAcquired;
+            }
+
+            retryCount ++;
+        }
+
+        return lockAcquired;
     }
 
     private boolean releaseLock(String shortCode, String uuid) {
