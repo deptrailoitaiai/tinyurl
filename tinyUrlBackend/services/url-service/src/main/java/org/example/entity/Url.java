@@ -13,7 +13,6 @@ import java.time.ZoneOffset;
 
 @Entity
 @Table(name = "urls")
-@DynamicUpdate
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,7 +23,7 @@ public class Url {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "original_url", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "original_url", nullable = false, unique = true, columnDefinition = "TEXT")
     private String originalUrl;
 
     @Column(name = "title", length = 500)

@@ -9,7 +9,6 @@ import org.hibernate.annotations.DynamicUpdate;
 
 @Entity
 @Table(name = "service_references")
-@DynamicUpdate
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

@@ -55,6 +55,8 @@ public class UrlRedirectServiceImpl implements UrlRedirectService {
             return ret;
         }
 
+        // TODO: send request to analytics service
+
         // 4. return
         ret.setOriginUrl(url.getOriginalUrl());
         ret.setErrorCode(ErrorCode.SUCCESS);

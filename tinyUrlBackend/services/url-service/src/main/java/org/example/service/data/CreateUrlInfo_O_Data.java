@@ -1,41 +1,21 @@
 package org.example.service.data;
 
+import lombok.*;
+import org.example.constants.ErrorCode;
+import org.example.entity.Url;
+
+import java.time.LocalDateTime;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class CreateUrlInfo_O_Data {
+    private ErrorCode errorCode;
     private String shortCode;
     private String originalUrl;
-    private Long expiresAt;
-    private String status;
-
-    // Getters and Setters
-    public String getShortCode() {
-        return shortCode;
-    }
-
-    public void setShortCode(String shortCode) {
-        this.shortCode = shortCode;
-    }
-
-    public String getOriginalUrl() {
-        return originalUrl;
-    }
-
-    public void setOriginalUrl(String originalUrl) {
-        this.originalUrl = originalUrl;
-    }
-
-    public Long getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Long expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    private Url.UrlStatus status;
+    private String title;
+    private LocalDateTime createAt;
+    private LocalDateTime expiredAt;
 }
