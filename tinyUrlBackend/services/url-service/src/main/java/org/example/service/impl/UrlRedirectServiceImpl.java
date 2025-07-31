@@ -23,8 +23,8 @@ public class UrlRedirectServiceImpl implements UrlRedirectService {
     private UrlSlaveRepository urlSlaveRepository;
 
     @Override
-    public RedirectWithPassword_O_Data redirectWithPassword(RedirectWithPassword_I_Data inputData) {
-        RedirectWithPassword_O_Data ret = new RedirectWithPassword_O_Data();
+    public RedirectWithPasswordOData redirectWithPassword(RedirectWithPasswordIData inputData) {
+        RedirectWithPasswordOData ret = new RedirectWithPasswordOData();
 
         // 1. Get URL by short code directly from slave repository
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
@@ -65,8 +65,8 @@ public class UrlRedirectServiceImpl implements UrlRedirectService {
     }
 
     @Override
-    public RedirectWithoutPassword_O_Data redirectWithoutPassword(RedirectWithoutPassword_I_Data inputData) {
-        RedirectWithoutPassword_O_Data ret = new RedirectWithoutPassword_O_Data();
+    public RedirectWithoutPasswordOData redirectWithoutPassword(RedirectWithoutPasswordIData inputData) {
+        RedirectWithoutPasswordOData ret = new RedirectWithoutPasswordOData();
 
         // 1. Get URL by short code directly from slave repository
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());

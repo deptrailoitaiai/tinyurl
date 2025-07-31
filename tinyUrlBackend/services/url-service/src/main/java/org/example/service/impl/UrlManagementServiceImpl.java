@@ -46,8 +46,8 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
             key = "#inputdata.shortCode",
             unless = "#result.errorCode = T(org.example.constants.ErrorCode).URL_NOT_FOUND"
     )
-    public GetUrlInfoById_O_Data getUrlInfoById(GetUrlInfoById_I_Data inputData) {
-        GetUrlInfoById_O_Data ret = new GetUrlInfoById_O_Data();
+    public GetUrlInfoByIdOData getUrlInfoById(GetUrlInfoByIdIData inputData) {
+        GetUrlInfoByIdOData ret = new GetUrlInfoByIdOData();
 
         // 1. get id by short code, find by id
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
@@ -91,8 +91,8 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
                 )
         }
     )
-    public UpdateUrlInfo_O_Data updateUrlInfo(UpdateUrlInfo_I_Data inputData) {
-        UpdateUrlInfo_O_Data ret = new UpdateUrlInfo_O_Data();
+    public UpdateUrlInfoOData updateUrlInfo(UpdateUrlInfoIData inputData) {
+        UpdateUrlInfoOData ret = new UpdateUrlInfoOData();
 
         // 1. try lock
         String uuidLock = UUID.randomUUID().toString();
@@ -143,8 +143,8 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
             key = "#inputData.shortCode",
             condition = "#result.errorCode == T(org.example.constants.ErrorCode).SUCCESS"
     )
-    public CreateUrlInfo_O_Data createUrlInfo(CreateUrlInfo_I_Data inputData) {
-        CreateUrlInfo_O_Data ret = new CreateUrlInfo_O_Data();
+    public CreateUrlInfoOData createUrlInfo(CreateUrlInfoIData inputData) {
+        CreateUrlInfoOData ret = new CreateUrlInfoOData();
 
         // 1. hash password
         String hashedPassword = null;
@@ -195,8 +195,8 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
             key = "#inputData.shortCode",
             condition = "#result.errorCode = T(org.example.constants.ErrorCode).SUCCESS"
     )
-    public DeleteUrlInfo_O_Data deleteUrlInfo(DeleteUrlInfo_I_Data inputData) {
-        DeleteUrlInfo_O_Data ret = new DeleteUrlInfo_O_Data();
+    public DeleteUrlInfoOData deleteUrlInfo(DeleteUrlInfoIData inputData) {
+        DeleteUrlInfoOData ret = new DeleteUrlInfoOData();
 
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
         try {
