@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class RedirectWithPasswordIData {
-    String shortCode;
-    String password;
+    private String shortCode;
+    private String password;
 }

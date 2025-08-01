@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class UpdateUrlInfoOData {
-    ErrorCode errorCode;
-    String shortCode;
-    String originalUrl;
-    String title;
-    Url.UrlStatus status;
-    LocalDateTime updateAt;
-    LocalDateTime expireAt;
+    private ErrorCode errorCode;
+    private String shortCode;
+    private String originalUrl;
+    private String title;
+    private Url.UrlStatus status;
+    private LocalDateTime updateAt;
+    private LocalDateTime expireAt;
 }

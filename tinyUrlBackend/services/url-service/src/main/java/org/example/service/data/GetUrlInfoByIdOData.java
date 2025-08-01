@@ -14,12 +14,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class GetUrlInfoByIdOData {
-    ErrorCode errorCode;
-    String originalUrl;
-    String title;
-    String passwordHash;
-    Url.UrlStatus status;
-    LocalDateTime createdAt;
-    LocalDateTime lastUpdate;
-    LocalDateTime expiredAt;
+    private ErrorCode errorCode;
+    private String originalUrl;
+    private String title;
+    private String passwordHash;
+    private Url.UrlStatus status;
+    private LocalDateTime createdAt;
+    private LocalDateTime lastUpdate;
+    private LocalDateTime expiredAt;
 }

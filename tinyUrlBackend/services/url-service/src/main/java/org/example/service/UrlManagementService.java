@@ -10,4 +10,6 @@ public interface UrlManagementService {
     UpdateUrlInfoOData updateUrlInfo(UpdateUrlInfoIData inputData);
 
     DeleteUrlInfoOData deleteUrlInfo(DeleteUrlInfoIData inputData);
+
+    // TODO: get all url limit 10
 }

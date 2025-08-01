@@ -22,12 +22,44 @@ public class ServiceReference {
     @Column(name = "local_id", nullable = false)
     private Long localId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "local_table", length = 100, nullable = false)
-    private String localTable;
+    private LocalTable localTable;
 
     @Column(name = "target_id", nullable = false)
     private Long targetId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "target_table", length = 100, nullable = false)
-    private String targetTable;
+    private TargetTable targetTable;
+
+    public enum LocalTable {
+        Urls("Urls");
+
+        private final String localTable;
+
+        LocalTable(String localTable) {
+            this.localTable = localTable;
+        }
+
+        @Override
+        public String toString() {
+            return localTable;
+        }
+    }
+
+    public enum TargetTable {
+        Users("Users");
+
+        private final String targetTable;
+
+        TargetTable(String targetTable) {
+            this.targetTable = targetTable;
+        }
+
+        @Override
+        public String toString() {
+            return targetTable;
+        }
+    }
 }

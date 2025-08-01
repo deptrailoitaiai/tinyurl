@@ -52,6 +52,20 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
         // 1. get id by short code, find by id
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
 
+        // 2. check if user got this url
+        Optional<ServiceReference> findLegitUrlIdByUserId = serviceReferenceMasterRepository
+                .findAllByLocalIdAndLocalTableAndTargetIdAndTargetTable(
+                        urlId,
+                        ServiceReference.LocalTable.Urls,
+                        inputData.getUserId(),
+                        ServiceReference.TargetTable.Users
+                );
+
+        if (findLegitUrlIdByUserId.isEmpty()) {
+            ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
+            return ret;
+        }
+
         Optional<Url> optionalUrl = urlSlaveRepository.findById(urlId);
 
         if (optionalUrl.isEmpty()) {
@@ -61,7 +75,7 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
 
         Url url = optionalUrl.get();
 
-        // 2. return url info
+        // 3. return url info
         ret.setOriginalUrl(url.getOriginalUrl());
         ret.setTitle(url.getTitle());
         ret.setPasswordHash(url.getPasswordHash());
@@ -103,9 +117,23 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
             return ret;
         }
 
-        // 2. get id by short code, find by id
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
 
+        // 2. check if url belong to user
+        Optional<ServiceReference> findLegitUrlIdByUserId = serviceReferenceMasterRepository
+                .findAllByLocalIdAndLocalTableAndTargetIdAndTargetTable(
+                        urlId,
+                        ServiceReference.LocalTable.Urls,
+                        inputData.getUserId(),
+                        ServiceReference.TargetTable.Users
+                );
+
+        if (findLegitUrlIdByUserId.isEmpty()) {
+            ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
+            return ret;
+        }
+
+        // 3. get id by short code, find by id
         Optional<Url> getOptionalUrl = urlMasterRepository.findById(urlId);
 
         if (getOptionalUrl.isEmpty()) {
@@ -115,7 +143,7 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
 
         Url getUrl = getOptionalUrl.get();
 
-        // 3. set changed field and update with @DynamicUpdate (include hash password before update)
+        // 4. set changed field and update with @DynamicUpdate (include hash password before update)
         getUrl.setTitle(inputData.getTitle() == null ? getUrl.getTitle() : inputData.getTitle());
         getUrl.setPasswordHash(inputData.getPassword() == null ? getUrl.getPasswordHash() : HashAndCompareUtil.hash(inputData.getPassword()));
         getUrl.setStatus(inputData.getStatus() == null ? getUrl.getStatus() : inputData.getStatus());
@@ -123,7 +151,7 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
 
         Url updateUrl = urlMasterRepository.save(getUrl);
 
-        // 4. release lock
+        // 5. release lock
         boolean releaseLock = releaseLock(inputData.getShortCode(), uuidLock);
 
         ret.setErrorCode(ErrorCode.SUCCESS);
@@ -172,9 +200,9 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
         // 3. save reference key to service_reference using another thread
         ServiceReference newReference = ServiceReference.builder()
                 .localId(savedUrl.getId())
-                .localTable("urls")
+                .localTable(ServiceReference.LocalTable.Urls)
                 .targetId(inputData.getUserId())
-                .targetTable("users")
+                .targetTable(ServiceReference.TargetTable.Users)
                 .build();
         saveServiceReferenceAsync(newReference);
 
@@ -199,6 +227,21 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
         DeleteUrlInfoOData ret = new DeleteUrlInfoOData();
 
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
+
+        // 1. check if url belong to user
+        Optional<ServiceReference> findLegitUrlIdByUserId = serviceReferenceMasterRepository
+                .findAllByLocalIdAndLocalTableAndTargetIdAndTargetTable(
+                        urlId,
+                        ServiceReference.LocalTable.Urls,
+                        inputData.getUserId(),
+                        ServiceReference.TargetTable.Users
+                );
+
+        if (findLegitUrlIdByUserId.isEmpty()) {
+            ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
+            return ret;
+        }
+
         try {
             urlMasterRepository.deleteById(urlId);
             ret.setErrorCode(ErrorCode.SUCCESS);
@@ -250,3 +293,5 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
         }).start();
     }
 }
+
+// TODO: check code again

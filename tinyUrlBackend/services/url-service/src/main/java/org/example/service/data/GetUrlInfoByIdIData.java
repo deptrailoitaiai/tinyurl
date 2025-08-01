@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class GetUrlInfoByIdIData {
-    String shortCode;
+    private Long userId;
+    private String shortCode;
 }

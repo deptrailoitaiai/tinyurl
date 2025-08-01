@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class DeleteUrlInfoIData {
+    private Long userId;
     private String shortCode;
 }

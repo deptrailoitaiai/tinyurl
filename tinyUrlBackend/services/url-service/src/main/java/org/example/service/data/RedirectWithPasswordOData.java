@@ -11,6 +11,6 @@ import org.example.constants.ErrorCode;
 @AllArgsConstructor
 @Builder
 public class RedirectWithPasswordOData {
-    ErrorCode errorCode;
-    String originUrl;
+    private ErrorCode errorCode;
+    private String originUrl;
 }

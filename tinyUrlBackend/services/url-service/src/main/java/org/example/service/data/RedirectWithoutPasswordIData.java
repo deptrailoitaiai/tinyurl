@@ -10,5 +10,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class RedirectWithoutPasswordIData {
-    String shortCode;
+    private String shortCode;
 }

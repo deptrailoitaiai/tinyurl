@@ -13,9 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class UpdateUrlInfoIData {
-    String shortCode;
-    String title;
-    String password;
-    Url.UrlStatus status;
-    LocalDateTime expiredAt;
+    private Long userId;
+    private String shortCode;
+    private String title;
+    private String password;
+    private Url.UrlStatus status;
+    private LocalDateTime expiredAt;
 }
