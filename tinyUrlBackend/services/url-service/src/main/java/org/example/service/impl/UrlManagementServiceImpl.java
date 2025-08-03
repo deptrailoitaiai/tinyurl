@@ -11,6 +11,8 @@ import org.example.service.data.*;
 import org.example.util.Base62Util;
 import org.example.util.HashAndCompareUtil;
 import org.hibernate.exception.ConstraintViolationException;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -18,12 +20,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service("UrlManagementServiceImpl")
 public class UrlManagementServiceImpl implements org.example.service.UrlManagementService {
@@ -40,28 +41,28 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
     @Autowired
     private StringRedisTemplate redisTemplate;
 
+    @Autowired
+    private RedissonClient redissonClient;
+
     @Override
-    @Cacheable(
-            value = "getUrlInfoCache",
-            key = "#inputdata.shortCode",
-            unless = "#result.errorCode = T(org.example.constants.ErrorCode).URL_NOT_FOUND"
-    )
     public GetUrlInfoByIdOData getUrlInfoById(GetUrlInfoByIdIData inputData) {
         GetUrlInfoByIdOData ret = new GetUrlInfoByIdOData();
-
-        // 1. get id by short code, find by id
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
 
-        // 2. check if user got this url
-        Optional<ServiceReference> findLegitUrlIdByUserId = serviceReferenceMasterRepository
-                .findAllByLocalIdAndLocalTableAndTargetIdAndTargetTable(
-                        urlId,
-                        ServiceReference.LocalTable.Urls,
-                        inputData.getUserId(),
-                        ServiceReference.TargetTable.Users
-                );
+        // Try to get from cache first
+        UrlInfoCacheData cachedData = getCachedUrlInfo(inputData.getShortCode());
+        if (cachedData != null) {
+            // Verify user has access to this URL
+            if (isUserAuthorizedForUrl(urlId, inputData.getUserId())) {
+                ret = cachedData.toGetUrlInfoByIdOData();
+                ret.setErrorCode(ErrorCode.SUCCESS);
+                return ret;
+            }
+        }
 
-        if (findLegitUrlIdByUserId.isEmpty()) {
+        // Cache miss or access denied - fetch from database
+        // Check if user has access to this url
+        if (!isUserAuthorizedForUrl(urlId, inputData.getUserId())) {
             ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
             return ret;
         }
@@ -75,6 +76,10 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
 
         Url url = optionalUrl.get();
 
+        // Cache the URL info for future use
+        UrlInfoCacheData cacheData = UrlInfoCacheData.fromUrl(url, inputData.getShortCode());
+        cacheUrlInfo(inputData.getShortCode(), cacheData);
+
         // 3. return url info
         ret.setOriginalUrl(url.getOriginalUrl());
         ret.setTitle(url.getTitle());
@@ -83,94 +88,81 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
         ret.setCreatedAt(url.getCreatedAt());
         ret.setLastUpdate(url.getUpdatedAt());
         ret.setExpiredAt(url.getExpiresAt());
+        ret.setErrorCode(ErrorCode.SUCCESS);
 
         return ret;
     }
 
     @Override
     @Transactional
-    @Caching(
-        evict = {
-                @CacheEvict(
-                        value = "urlInfoCache",
-                        key = "#inputData.shortCode",
-                        condition = "#result.errorCode = T(org.example.constants.ErrorCode).SUCCESS"
-                )
-        },
-        put = {
-                @CachePut(
-                        value = "urlInfoCache",
-                        key = "#inputData.shortCode",
-                        condition = "#result.errorCode = T(org.example.constants.ErrorCode).SUCCESS"
-                )
-        }
-    )
     public UpdateUrlInfoOData updateUrlInfo(UpdateUrlInfoIData inputData) {
         UpdateUrlInfoOData ret = new UpdateUrlInfoOData();
+        boolean locked = tryLock(inputData.getShortCode());
 
-        // 1. try lock
-        String uuidLock = UUID.randomUUID().toString();
-        boolean canLock = tryLock(inputData.getShortCode(), uuidLock);
-
-        if (!canLock) {
+        if (!locked) {
             ret.setErrorCode(ErrorCode.SYSTEM_ERROR);
             return ret;
         }
 
-        Long urlId = Base62Util.base62ToId(inputData.getShortCode());
+        try {
+            Long urlId = Base62Util.base62ToId(inputData.getShortCode());
 
-        // 2. check if url belong to user
-        Optional<ServiceReference> findLegitUrlIdByUserId = serviceReferenceMasterRepository
-                .findAllByLocalIdAndLocalTableAndTargetIdAndTargetTable(
-                        urlId,
-                        ServiceReference.LocalTable.Urls,
-                        inputData.getUserId(),
-                        ServiceReference.TargetTable.Users
-                );
+            // Check if user has access to this URL
+            if (!isUserAuthorizedForUrl(urlId, inputData.getUserId())) {
+                ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
+                return ret;
+            }
 
-        if (findLegitUrlIdByUserId.isEmpty()) {
-            ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
-            return ret;
+            Optional<Url> urlOpt = urlMasterRepository.findById(urlId);
+            if (urlOpt.isEmpty()) {
+                ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
+                return ret;
+            }
+
+            Url url = urlOpt.get();
+
+            if (inputData.getTitle() != null) url.setTitle(inputData.getTitle());
+            if (inputData.getPassword() != null) url.setPasswordHash(HashAndCompareUtil.hash(inputData.getPassword()));
+            if (inputData.getStatus() != null) url.setStatus(inputData.getStatus());
+            if (inputData.getExpiredAt() != null) url.setExpiresAt(inputData.getExpiredAt());
+
+            urlMasterRepository.save(url);
+
+            // Update cache with new data
+            UrlInfoCacheData cacheData = UrlInfoCacheData.fromUrl(url, inputData.getShortCode());
+            cacheUrlInfo(inputData.getShortCode(), cacheData);
+            
+            // Also update redirect cache since URL data changed
+            evictRedirectCache(inputData.getShortCode());
+
+            // Set response
+            ret.setErrorCode(ErrorCode.SUCCESS);
+            ret.setShortCode(inputData.getShortCode());
+            ret.setOriginalUrl(url.getOriginalUrl());
+            ret.setTitle(url.getTitle());
+            ret.setStatus(url.getStatus());
+            ret.setUpdateAt(url.getUpdatedAt());
+            ret.setExpireAt(url.getExpiresAt());
+        } catch (RuntimeException ex) {
+            ret.setErrorCode(ErrorCode.SYSTEM_ERROR);
+        } finally {
+            boolean released = releaseLock(inputData.getShortCode());
+            if (!released) {
+                System.err.println("Không thể release lock cho shortCode: " + inputData.getShortCode());
+            }
         }
-
-        // 3. get id by short code, find by id
-        Optional<Url> getOptionalUrl = urlMasterRepository.findById(urlId);
-
-        if (getOptionalUrl.isEmpty()) {
-            ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
-            return ret;
-        }
-
-        Url getUrl = getOptionalUrl.get();
-
-        // 4. set changed field and update with @DynamicUpdate (include hash password before update)
-        getUrl.setTitle(inputData.getTitle() == null ? getUrl.getTitle() : inputData.getTitle());
-        getUrl.setPasswordHash(inputData.getPassword() == null ? getUrl.getPasswordHash() : HashAndCompareUtil.hash(inputData.getPassword()));
-        getUrl.setStatus(inputData.getStatus() == null ? getUrl.getStatus() : inputData.getStatus());
-        getUrl.setExpiresAt(inputData.getExpiredAt() == null ? getUrl.getExpiresAt() : inputData.getExpiredAt());
-
-        Url updateUrl = urlMasterRepository.save(getUrl);
-
-        // 5. release lock
-        boolean releaseLock = releaseLock(inputData.getShortCode(), uuidLock);
-
-        ret.setErrorCode(ErrorCode.SUCCESS);
-        ret.setShortCode(inputData.getShortCode());
-        ret.setOriginalUrl(getUrl.getOriginalUrl());
-        ret.setTitle(getUrl.getTitle());
-        ret.setStatus(getUrl.getStatus());
-        ret.setUpdateAt(getUrl.getUpdatedAt());
-        ret.setExpireAt(getUrl.getExpiresAt());
 
         return ret;
     }
 
+
     @Override
-    @CachePut(
-            value = "urlInfoCache",
-            key = "#inputData.shortCode",
-            condition = "#result.errorCode == T(org.example.constants.ErrorCode).SUCCESS"
-    )
+//    @CachePut(
+//            value = "urlInfoCache",
+//            key = "",
+//            condition = "#result.errorCode == T(org.example.constants.ErrorCode).SUCCESS"
+//    )
+    @Transactional
     public CreateUrlInfoOData createUrlInfo(CreateUrlInfoIData inputData) {
         CreateUrlInfoOData ret = new CreateUrlInfoOData();
 
@@ -204,7 +196,13 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
                 .targetId(inputData.getUserId())
                 .targetTable(ServiceReference.TargetTable.Users)
                 .build();
-        saveServiceReferenceAsync(newReference);
+
+        try {
+            serviceReferenceMasterRepository.save(newReference);
+        } catch (Exception e) {
+            ret.setErrorCode(ErrorCode.SYSTEM_ERROR);
+            return ret;
+        }
 
         // 4. return response
         String shortCode = Base62Util.idToBase62(savedUrl.getId());
@@ -218,32 +216,27 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
     }
 
     @Override
-    @CacheEvict(
-            value = "urlInfoCache",
-            key = "#inputData.shortCode",
-            condition = "#result.errorCode = T(org.example.constants.ErrorCode).SUCCESS"
-    )
+    @Transactional
     public DeleteUrlInfoOData deleteUrlInfo(DeleteUrlInfoIData inputData) {
         DeleteUrlInfoOData ret = new DeleteUrlInfoOData();
 
         Long urlId = Base62Util.base62ToId(inputData.getShortCode());
 
-        // 1. check if url belong to user
-        Optional<ServiceReference> findLegitUrlIdByUserId = serviceReferenceMasterRepository
-                .findAllByLocalIdAndLocalTableAndTargetIdAndTargetTable(
-                        urlId,
-                        ServiceReference.LocalTable.Urls,
-                        inputData.getUserId(),
-                        ServiceReference.TargetTable.Users
-                );
-
-        if (findLegitUrlIdByUserId.isEmpty()) {
+        // Check if url belongs to user
+        if (!isUserAuthorizedForUrl(urlId, inputData.getUserId())) {
             ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
             return ret;
         }
 
         try {
             urlMasterRepository.deleteById(urlId);
+            
+            // Remove from cache after successful deletion
+            evictUrlInfoCache(inputData.getShortCode());
+            
+            // Also remove from redirect cache
+            evictRedirectCache(inputData.getShortCode());
+            
             ret.setErrorCode(ErrorCode.SUCCESS);
         } catch (Exception e) {
             ret.setErrorCode(ErrorCode.SYSTEM_ERROR);
@@ -252,46 +245,78 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
         return ret;
     }
 
-    private boolean tryLock(String shortCode, String uuid) {
-        String lockKey = "updateUrlInfoLock" + "::" + shortCode;
-        boolean lockAcquired = false;
-        int maxRetries = 3;
-        int retryCount = 0;
+    public boolean tryLock(String shortCode) {
+        String lockKey = "updateUrlInfoLock::" + shortCode;
+        RLock lock = redissonClient.getLock(lockKey);
 
-        while (!lockAcquired && retryCount < maxRetries) {
-            lockAcquired = Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(lockKey, uuid, Duration.ofSeconds(30)));
-
-            if (lockAcquired) {
-                return lockAcquired;
-            }
-
-            retryCount ++;
+        try {
+            return lock.tryLock(1, 10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
         }
-
-        return lockAcquired;
     }
 
-    private boolean releaseLock(String shortCode, String uuid) {
-        String lockKey = "updateUrlInfoLock" + "::" + shortCode;
+    public boolean releaseLock(String shortCode) {
+        String lockKey = "updateUrlInfoLock::" + shortCode;
+        RLock lock = redissonClient.getLock(lockKey);
 
-        String valueOfLock = redisTemplate.opsForValue().get(lockKey);
-        if(Objects.equals(uuid, valueOfLock)) {
-            return redisTemplate.delete(lockKey);
+        if (lock.isHeldByCurrentThread()) {
+            lock.unlock();
+            return true;
         }
 
         return false;
     }
 
-    private void saveServiceReferenceAsync(ServiceReference reference) {
-        new Thread(() -> {
-            try {
-                serviceReferenceMasterRepository.save(reference);
-            } catch (Exception e) {
-                // Log error
-                System.err.println("Failed to save service reference: " + e.getMessage());
-            }
-        }).start();
+    /**
+     * Cache URL info using manual cache operations
+     */
+    @CachePut(value = "urlInfoCache", key = "#shortCode")
+    private UrlInfoCacheData cacheUrlInfo(String shortCode, UrlInfoCacheData cacheData) {
+        return cacheData;
     }
+
+    /**
+     * Get cached URL info
+     */
+    @Cacheable(value = "urlInfoCache", key = "#shortCode")
+    private UrlInfoCacheData getCachedUrlInfo(String shortCode) {
+        return null; // Will be populated by cache if exists
+    }
+
+    /**
+     * Evict URL info from cache
+     */
+    @CacheEvict(value = "urlInfoCache", key = "#shortCode")
+    private void evictUrlInfoCache(String shortCode) {
+        // Cache will be evicted automatically
+    }
+
+    /**
+     * Evict URL redirect cache when URL data changes
+     */
+    @CacheEvict(value = "urlRedirectCache", key = "#shortCode")
+    private void evictRedirectCache(String shortCode) {
+        // Cache will be evicted automatically
+    }
+
+    /**
+     * Check if a specific user has access to a specific URL
+     * More efficient than getting all authorized users when we only need to check one user
+     */
+    private boolean isUserAuthorizedForUrl(Long urlId, Long userId) {
+        Optional<ServiceReference> reference = serviceReferenceMasterRepository
+                .findAllByLocalIdAndLocalTableAndTargetIdAndTargetTable(
+                        urlId,
+                        ServiceReference.LocalTable.Urls,
+                        userId,
+                        ServiceReference.TargetTable.Users
+                );
+        
+        return reference.isPresent();
+    }
+
 }
 
 // TODO: check code again
