@@ -1,4 +1,4 @@
-package org.example.service;
+package org.example.service.UrlRedirect;
 
 import org.example.service.data.RedirectWithPasswordIData;
 import org.example.service.data.RedirectWithPasswordOData;

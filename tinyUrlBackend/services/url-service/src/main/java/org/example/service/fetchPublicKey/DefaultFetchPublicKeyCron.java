@@ -1,11 +1,11 @@
-package org.example.service.impl;
+package org.example.service.fetchPublicKey;
 
-import org.example.service.FetchPublicKeyCron;
+import org.example.service.fetchPublicKey.FetchPublicKeyCron;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @EnableScheduling
-public class FetchPublicKeyCronImpl implements FetchPublicKeyCron {
+public class DefaultFetchPublicKeyCron implements FetchPublicKeyCron {
 
     @Override
     @Scheduled(cron = "0 0 */6 * * *")

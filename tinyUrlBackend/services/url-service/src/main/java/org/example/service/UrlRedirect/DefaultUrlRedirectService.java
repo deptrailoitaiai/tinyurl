@@ -1,9 +1,9 @@
-package org.example.service.impl;
+package org.example.service.UrlRedirect;
 
 import org.example.constants.ErrorCode;
 import org.example.entity.Url;
 import org.example.repository.slave.UrlSlaveRepository;
-import org.example.service.UrlRedirectService;
+import org.example.service.UrlRedirect.UrlRedirectService;
 import org.example.service.data.*;
 import org.example.util.Base62Util;
 import org.example.util.HashAndCompareUtil;
@@ -15,8 +15,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-@Service("UrlRedirectServiceImpl")
-public class UrlRedirectServiceImpl implements UrlRedirectService {
+@Service("DefaultUrlRedirectService")
+public class DefaultUrlRedirectService implements UrlRedirectService {
 
     @Autowired
     private StringRedisTemplate redisTemplate;

@@ -6,10 +6,11 @@ import org.example.dto.request.RedirectRequest;
 import org.example.dto.request.UpdateUrlRequest;
 import org.example.dto.response.*;
 import org.example.entity.Url;
-import org.example.service.UrlManagementService;
-import org.example.service.UrlRedirectService;
+import org.example.service.UrlManagement.UrlManagementService;
+import org.example.service.UrlRedirect.UrlRedirectService;
 import org.example.service.data.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -103,6 +104,18 @@ public class UrlController {
 
             return ResponseEntity.ok(ApiResponse.success(response));
 
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Internal server error", ErrorCode.SYSTEM_ERROR.toString()));
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<UrlProjection>>> getAllUrlLimit(@RequestParam int page, @RequestParam int size) {
+        try {
+            Page<UrlProjection> urlProjections = urlManagementService.getAllUrlInfo(page, size);
+
+            return ResponseEntity.ok(ApiResponse.success(urlProjections));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Internal server error", ErrorCode.SYSTEM_ERROR.toString()));

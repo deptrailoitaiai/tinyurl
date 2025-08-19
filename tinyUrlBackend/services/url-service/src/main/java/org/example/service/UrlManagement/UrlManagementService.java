@@ -1,6 +1,7 @@
-package org.example.service;
+package org.example.service.UrlManagement;
 
 import org.example.service.data.*;
+import org.springframework.data.domain.Page;
 
 public interface UrlManagementService {
     GetUrlInfoByIdOData getUrlInfoById(GetUrlInfoByIdIData inputData);
@@ -11,5 +12,5 @@ public interface UrlManagementService {
 
     DeleteUrlInfoOData deleteUrlInfo(DeleteUrlInfoIData inputData);
 
-    // TODO: get all url limit 10
+    Page<UrlProjection> getAllUrlInfo(int page, int size);
 }

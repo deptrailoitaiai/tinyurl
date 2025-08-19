@@ -33,7 +33,7 @@ public class HealthCheckService {
                     .applicationName(applicationName)
                     .version(version)
                     .uptime(uptime)
-                    .message("Service đang hoạt động bình thường")
+                    .message("Service normal")
                     .build();
 
         } catch (Exception e) {

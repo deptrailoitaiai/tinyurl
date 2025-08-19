@@ -1,4 +1,4 @@
-package org.example.service.impl;
+package org.example.service.UrlManagement;
 
 import jakarta.transaction.Transactional;
 import org.example.constants.ErrorCode;
@@ -7,6 +7,7 @@ import org.example.entity.Url;
 import org.example.repository.master.ServiceReferenceMasterRepository;
 import org.example.repository.master.UrlMasterRepository;
 import org.example.repository.slave.UrlSlaveRepository;
+import org.example.service.UrlManagement.UrlManagementService;
 import org.example.service.data.*;
 import org.example.util.Base62Util;
 import org.example.util.HashAndCompareUtil;
@@ -17,17 +18,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-@Service("UrlManagementServiceImpl")
-public class UrlManagementServiceImpl implements org.example.service.UrlManagementService {
+@Service("DefaultUrlManagementService")
+public class DefaultUrlManagementService implements UrlManagementService {
 
     @Autowired
     private UrlSlaveRepository urlSlaveRepository;
@@ -43,6 +45,14 @@ public class UrlManagementServiceImpl implements org.example.service.UrlManageme
 
     @Autowired
     private RedissonClient redissonClient;
+
+    @Override
+    public Page<UrlProjection> getAllUrlInfo(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<UrlProjection> urlPage = urlSlaveRepository.findAllBy(pageable);
+
+        return urlPage;
+    }
 
     @Override
     public GetUrlInfoByIdOData getUrlInfoById(GetUrlInfoByIdIData inputData) {
