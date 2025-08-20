@@ -2,15 +2,15 @@ package org.example.service.authFogetPassword;
 
 import org.example.service.data.ForgetPasswordIData;
 import org.example.service.data.ForgetPasswordOData;
-import org.example.service.data.VerifyEmailIData;
-import org.example.service.data.VerifyEmailOData;
+import org.example.service.data.VerifyEmailForgetPassIData;
+import org.example.service.data.VerifyEmailForgetPassOData;
 import org.springframework.stereotype.Service;
 
 @Service
 public class DefaultAuthForgetPasswordService implements AuthForgetPasswordService {
 
     @Override
-    public VerifyEmailOData verifyEmail(VerifyEmailIData input) {
+    public VerifyEmailForgetPassOData verifyEmail(VerifyEmailForgetPassIData input) {
         // TODO: Implement email verification logic
         return null;
     }

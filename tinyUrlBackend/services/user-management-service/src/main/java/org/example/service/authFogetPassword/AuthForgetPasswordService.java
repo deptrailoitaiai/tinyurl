@@ -2,11 +2,11 @@ package org.example.service.authFogetPassword;
 
 import org.example.service.data.ForgetPasswordIData;
 import org.example.service.data.ForgetPasswordOData;
-import org.example.service.data.VerifyEmailIData;
-import org.example.service.data.VerifyEmailOData;
+import org.example.service.data.VerifyEmailForgetPassIData;
+import org.example.service.data.VerifyEmailForgetPassOData;
 
 public interface AuthForgetPasswordService {
-    VerifyEmailOData verifyEmail(VerifyEmailIData input);
+    VerifyEmailForgetPassOData verifyEmail(VerifyEmailForgetPassIData input);
 
     ForgetPasswordOData generatePasscode(ForgetPasswordIData input);
 

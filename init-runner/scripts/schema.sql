@@ -8,7 +8,6 @@ USE user_management_service;
 -- Bảng lưu trữ thông tin người dùng
 CREATE TABLE `users` (
     `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `username` VARCHAR(50) NOT NULL,
     `email` VARCHAR(255) NOT NULL,
     `password_hash` VARCHAR(255) NOT NULL,
     `full_name` VARCHAR(255) NULL,

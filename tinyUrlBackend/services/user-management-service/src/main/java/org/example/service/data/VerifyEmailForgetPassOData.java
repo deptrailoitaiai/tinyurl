@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class VerifyEmailOData {
+public class VerifyEmailForgetPassOData {
     private boolean success;
     private String message;
     private boolean emailVerified;

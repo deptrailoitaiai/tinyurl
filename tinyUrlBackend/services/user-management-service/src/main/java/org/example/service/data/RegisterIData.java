@@ -12,8 +12,6 @@ import lombok.NoArgsConstructor;
 public class RegisterIData {
     private String email;
     private String password;
-    private String confirmPassword;
-    private String firstName;
-    private String lastName;
+    private String fullName;
     private String phoneNumber;
 }
