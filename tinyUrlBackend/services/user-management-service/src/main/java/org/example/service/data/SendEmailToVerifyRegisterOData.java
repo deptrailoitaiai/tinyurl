@@ -4,13 +4,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.constants.ErrorCode;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RegisterIData {
-    private String email;
-    private String password;
-    private String fullName;
+public class SendEmailToVerifyRegisterOData {
+    private ErrorCode errCode;
 }

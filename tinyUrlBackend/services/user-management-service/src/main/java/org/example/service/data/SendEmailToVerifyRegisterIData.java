@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class RegisterIData {
+public class SendEmailToVerifyRegisterIData {
     private String email;
-    private String password;
-    private String fullName;
 }

@@ -290,7 +290,7 @@ public class DefaultUrlManagementService implements UrlManagementService {
     /**
      * Get cached URL info
      */
-    @Cacheable(value = "urlInfoCache", key = "#shortCode")
+    @Cacheable(value = "urlInfoCache", key = "#shortCode", unless = "#result == null")
     private UrlInfoCacheData getCachedUrlInfo(String shortCode) {
         return null; // Will be populated by cache if exists
     }
@@ -328,5 +328,3 @@ public class DefaultUrlManagementService implements UrlManagementService {
     }
 
 }
-
-// TODO: check code again
