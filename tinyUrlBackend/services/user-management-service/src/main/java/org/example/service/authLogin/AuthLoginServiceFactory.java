@@ -11,7 +11,6 @@ public class AuthLoginServiceFactory {
     private final AuthLoginService passwordAuthLoginService;
     private final AuthLoginService facebookAuthLoginService;
 
-    @Autowired
     public AuthLoginServiceFactory(
             @Qualifier("googleAuthLoginService") AuthLoginService googleAuthLoginService,
             @Qualifier("passwordAuthLoginService") AuthLoginService passwordAuthLoginService,

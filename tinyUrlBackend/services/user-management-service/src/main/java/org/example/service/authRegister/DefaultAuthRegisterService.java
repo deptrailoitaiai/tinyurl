@@ -7,16 +7,21 @@ import org.example.service.data.*;
 import org.example.util.HashAndCompareUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class DefaultAuthRegisterService implements AuthRegisterService {
 
     @Autowired
     private UserMasterRepository userMasterRepository;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Override
     public RegisterOData register(RegisterIData input) {
@@ -36,10 +41,11 @@ public class DefaultAuthRegisterService implements AuthRegisterService {
             newUser.setFullName(input.getFullName());
             newUser.setPasswordHash(HashAndCompareUtil.hash(input.getPassword()));
 
-            Long userId = userMasterRepository.save(newUser).getId();
+            newUser = userMasterRepository.save(newUser);
 
             ret.setErrCode(ErrorCode.SUCCESS);
-            ret.setUserId(userId);
+            ret.setEmail(newUser.getEmail());
+            ret.setUserId(newUser.getId());
 
             return ret;
         } catch (Exception e) {
@@ -49,21 +55,48 @@ public class DefaultAuthRegisterService implements AuthRegisterService {
 
     @Override
     public VerifyEmailRegisterOData verifyEmail(VerifyEmailRegisterIData input) {
+        VerifyEmailRegisterOData ret = new VerifyEmailRegisterOData();
+        try {
+            String userId = input.getUserId();
+            String providedToken = input.getToken();
 
-        return null;
+            String redisKey = "cacheToken::" + userId;
+            String storedToken = redisTemplate.opsForValue().get(redisKey);
+
+            if (storedToken == null || !storedToken.equals(providedToken)) {
+                ret.setErrCode(ErrorCode.UNIDENTIFIED_TOKEN);
+                return ret;
+            }
+
+            redisTemplate.delete(redisKey);
+
+            ret.setErrCode(ErrorCode.SUCCESS);
+            return ret;
+
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public SendEmailToVerifyRegisterOData sendEmailToVerifyRegister(SendEmailToVerifyRegisterIData input) {
+        SendEmailToVerifyRegisterOData ret = new SendEmailToVerifyRegisterOData();
+        try {
+            String token = generateToken(input.getUserId());
 
+            // TODO send email
 
-        return null;
+            ret.setErrCode(ErrorCode.SUCCESS);
+            return ret;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    @Cacheable(value = "cacheToken", key = "#userId")
     private String generateToken(String userId) {
         String token = UUID.randomUUID().toString();
-
+        String redisKey = "cacheToken::" + userId;
+        redisTemplate.opsForValue().set(redisKey, token, 5, TimeUnit.MINUTES);
         return token;
     }
 }

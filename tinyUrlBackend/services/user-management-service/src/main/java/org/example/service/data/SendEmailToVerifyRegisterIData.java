@@ -11,4 +11,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class SendEmailToVerifyRegisterIData {
     private String email;
+    private String userId;
 }

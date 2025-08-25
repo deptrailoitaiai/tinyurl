@@ -13,5 +13,6 @@ import org.example.constants.ErrorCode;
 public class RegisterOData {
     private ErrorCode errCode;
     private Long userId;
+    private String email;
     private String verificationToken;
 }
