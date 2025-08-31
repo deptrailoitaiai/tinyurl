@@ -19,8 +19,11 @@ public class JwtService {
     private final MACVerifier verifier;
     private final JWSAlgorithm algorithm;
 
-    @Value("${jwt.expiration}")
-    private long expiration;
+    @Value("${jwt.access-token.expiration}")
+    private long accessTokenExpiration;
+
+    @Value("${jwt.refresh-token.expiration}")
+    private long refreshTokenExpiration;
 
     public JwtService(MACSigner signer, MACVerifier verifier, JWSAlgorithm algorithm) {
         this.signer = signer;
@@ -31,13 +34,14 @@ public class JwtService {
     // Generate token
     public String generateAccessToken(Long userId) throws JOSEException {
         Date now = new Date();
-        Date exp = new Date(now.getTime() + expiration);
+        Date exp = new Date(now.getTime() + accessTokenExpiration);
 
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .subject(userId.toString())
                 .issuer("tinyurl-app")
                 .issueTime(now)
                 .expirationTime(exp)
+                .claim("token_type", "ACCESS")
                 .build();
 
         JWSHeader header = new JWSHeader(algorithm);
@@ -50,13 +54,14 @@ public class JwtService {
 
     public String generateRefreshToken(Long userId) throws JOSEException {
         Date now = new Date();
-        Date exp = new Date(now.getTime() + expiration);
+        Date exp = new Date(now.getTime() + refreshTokenExpiration);
 
         JWTClaimsSet claims = new JWTClaimsSet.Builder()
                 .subject(userId.toString())
                 .issuer("tinyurl-app")
                 .issueTime(now)
                 .expirationTime(exp)
+                .claim("token_type", "REFRESH")
                 .build();
 
         JWSHeader header = new JWSHeader(algorithm);

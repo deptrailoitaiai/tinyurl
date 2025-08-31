@@ -4,7 +4,7 @@ import org.example.service.data.AuthenticateLoginIData;
 import org.example.service.data.AuthenticateLoginOData;
 import org.springframework.stereotype.Service;
 
-@Service("googleAuthLoginService")
+@Service("GoogleAuthLoginService")
 public class GoogleAuthLoginService implements AuthLoginService {
 
     @Override

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
-@Service("passwordAuthLoginService")
+@Service("PasswordAuthLoginService")
 public class PasswordAuthLoginService implements AuthLoginService {
 
     @Autowired
@@ -41,12 +41,17 @@ public class PasswordAuthLoginService implements AuthLoginService {
                 return ret;
             }
 
-            String jwtToken = jwtService.generateAccessToken(user.getId());
+            String jwtAccessToken = jwtService.generateAccessToken(user.getId());
+            String jwtRefreshToken = jwtService.generateRefreshToken(user.getId());
+
+            ret.setErrCode(ErrorCode.SUCCESS);
+            ret.setAccessToken(jwtAccessToken);
+            ret.setRefreshToken(jwtRefreshToken);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        return null;
+        return ret;
     }
 }
