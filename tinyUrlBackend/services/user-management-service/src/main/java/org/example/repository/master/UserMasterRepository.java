@@ -15,19 +15,9 @@ import java.util.Optional;
 public interface UserMasterRepository extends JpaRepository<User, Long> {
 
     /**
-     * Find user by username for authentication
-     */
-    Optional<User> findByUsername(String username);
-
-    /**
      * Find user by email for authentication and email operations
      */
     Optional<User> findByEmail(String email);
-
-    /**
-     * Check if username exists
-     */
-    boolean existsByUsername(String username);
 
     /**
      * Check if email exists

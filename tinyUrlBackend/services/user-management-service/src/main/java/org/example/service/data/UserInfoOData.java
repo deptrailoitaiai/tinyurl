@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.constants.ErrorCode;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -11,12 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class UserInfoOData {
+    private ErrorCode errCode;
     private Long userId;
     private String email;
-    private String firstName;
-    private String lastName;
-    private String phoneNumber;
-    private boolean emailVerified;
-    private LocalDateTime createdAt;
+    private String fullName;
+    private LocalDateTime lastUpdate;
     private LocalDateTime lastLoginAt;
 }

@@ -1,16 +1,18 @@
 package org.example.service.authLogin.factory;
 
-import java.util.Locale;
+import org.springframework.stereotype.Component;
+
 import java.util.Map;
 
-public class FactoryFinder {
+@Component
+public class AuthLoginServiceFactoryFinder {
     final private Map<String, AuthLoginServiceFactory> factories;
 
-    public FactoryFinder(Map<String, AuthLoginServiceFactory> factories) {
+    public AuthLoginServiceFactoryFinder(Map<String, AuthLoginServiceFactory> factories) {
         this.factories = factories;
     }
 
-    public AuthLoginServiceFactory getFactory(AuthLoginServiceFactory.AuthenticationType type) {
+    public AuthLoginServiceFactory getFactory(AuthenticationType type) {
         String factoryBeanName = Character.toUpperCase(type.name().charAt(0)) + type.name().substring(1)  + "AuthLoginServiceFactory";
 
         AuthLoginServiceFactory factory = factories.get(factoryBeanName);
@@ -20,5 +22,9 @@ public class FactoryFinder {
         }
 
         return factory;
+    }
+
+    public enum AuthenticationType {
+        PASSWORD, GOOGLE, FACEBOOK
     }
 }

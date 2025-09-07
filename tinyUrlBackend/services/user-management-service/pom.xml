@@ -53,6 +53,11 @@
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>9.47</version>
         </dependency>
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson-spring-boot-starter</artifactId>
+            <version>3.27.2</version>
+        </dependency>
     </dependencies>
 
     <build>

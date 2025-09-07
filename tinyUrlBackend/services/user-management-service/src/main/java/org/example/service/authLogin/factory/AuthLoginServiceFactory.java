@@ -7,8 +7,4 @@ import org.springframework.stereotype.Component;
 @Component
 public abstract class AuthLoginServiceFactory {
     public abstract AuthLoginService getAuthService();
-
-    public enum AuthenticationType {
-        PASSWORD, GOOGLE, FACEBOOK
-    }
 }

@@ -85,8 +85,8 @@ public class JwtService {
         }
     }
 
-    public Long getUserId(String token) throws Exception {
+    public JWTClaimsSet getPayload(String token) throws Exception {
         SignedJWT signedJWT = SignedJWT.parse(token);
-        return Long.parseLong(signedJWT.getJWTClaimsSet().getSubject());
+        return signedJWT.getJWTClaimsSet();
     }
 }
