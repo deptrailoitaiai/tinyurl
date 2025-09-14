@@ -2,6 +2,8 @@ package org.example.service.UrlManagement;
 
 import jakarta.transaction.Transactional;
 import org.example.constants.ErrorCode;
+import org.example.dto.CursorPageRequest;
+import org.example.dto.CursorPageResponse;
 import org.example.entity.ServiceReference;
 import org.example.entity.Url;
 import org.example.repository.master.ServiceReferenceMasterRepository;
@@ -25,6 +27,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +55,46 @@ public class DefaultUrlManagementService implements UrlManagementService {
         Page<UrlProjection> urlPage = urlSlaveRepository.findAllBy(pageable);
 
         return urlPage;
+    }
+
+    @Override
+    public CursorPageResponse<UrlProjection> getAllUrlInfoWithCursor(CursorPageRequest cursorRequest) {
+        // Tạo Pageable với limit + 1 để kiểm tra hasNext
+        Pageable pageable = PageRequest.of(0, cursorRequest.getLimit() + 1);
+        
+        List<UrlProjection> urls;
+        
+        if (cursorRequest.getCursor() == null) {
+            // First page
+            if (cursorRequest.getDirection() == CursorPageRequest.SortDirection.ASC) {
+                urls = urlSlaveRepository.findAllFirstPageAsc(pageable);
+            } else {
+                urls = urlSlaveRepository.findAllFirstPageDesc(pageable);
+            }
+        } else {
+            // Subsequent pages
+            if (cursorRequest.getDirection() == CursorPageRequest.SortDirection.ASC) {
+                urls = urlSlaveRepository.findAllByCursorAsc(cursorRequest.getCursor(), pageable);
+            } else {
+                urls = urlSlaveRepository.findAllByCursorDesc(cursorRequest.getCursor(), pageable);
+            }
+        }
+        
+        // Kiểm tra hasNext và xử lý kết quả
+        boolean hasNext = urls.size() > cursorRequest.getLimit();
+        
+        if (hasNext) {
+            urls = urls.subList(0, cursorRequest.getLimit()); // Remove extra item
+        }
+        
+        // Determine next cursor
+        Long nextCursor = null;
+        if (hasNext && !urls.isEmpty()) {
+            UrlProjection lastUrl = urls.get(urls.size() - 1);
+            nextCursor = lastUrl.getId();
+        }
+        
+        return CursorPageResponse.of(urls, nextCursor, hasNext);
     }
 
     @Override

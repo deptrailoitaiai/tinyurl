@@ -45,7 +45,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<AuthResponse>> login(@RequestBody LoginRequest request) {
         try {
             // Get appropriate login service based on login type
-            AuthLoginService authLoginService = authLoginServiceFactoryFinder.findAuthLoginService(request.getLoginType());
+            AuthLoginService authLoginService = authLoginServiceFactoryFinder.getFactory(request.getLoginType()).getAuthService();
             
             // Convert request to service input data
             AuthenticateLoginIData inputData = AuthenticateLoginIData.builder()
@@ -314,11 +314,11 @@ public class UserController {
             ForgetPasswordOData outputData = authForgetPasswordService.generatePasscode(inputData);
 
             // Handle error cases
-            if (outputData.getErrCode() != ErrorCode.SUCCESS) {
-                return ResponseEntity.status(getHttpStatus(outputData.getErrCode()))
-                        .body(ApiResponse.error(getErrorMessage(outputData.getErrCode()),
-                                outputData.getErrCode().toString()));
-            }
+//            if (outputData.getErrCode() != ErrorCode.SUCCESS) {
+//                return ResponseEntity.status(getHttpStatus(outputData.getErrCode()))
+//                        .body(ApiResponse.error(getErrorMessage(outputData.getErrCode()),
+//                                outputData.getErrCode().toString()));
+//            }
 
             return ResponseEntity.ok(ApiResponse.success("Password reset email sent successfully", 
                     "Please check your email for password reset instructions"));

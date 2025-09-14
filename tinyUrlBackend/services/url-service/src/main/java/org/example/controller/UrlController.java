@@ -1,6 +1,8 @@
 package org.example.controller;
 
 import org.example.constants.ErrorCode;
+import org.example.dto.CursorPageRequest;
+import org.example.dto.CursorPageResponse;
 import org.example.dto.request.CreateUrlRequest;
 import org.example.dto.request.RedirectRequest;
 import org.example.dto.request.UpdateUrlRequest;
@@ -116,6 +118,37 @@ public class UrlController {
             Page<UrlProjection> urlProjections = urlManagementService.getAllUrlInfo(page, size);
 
             return ResponseEntity.ok(ApiResponse.success(urlProjections));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Internal server error", ErrorCode.SYSTEM_ERROR.toString()));
+        }
+    }
+
+    @GetMapping("/cursor")
+    public ResponseEntity<ApiResponse<CursorPageResponse<UrlProjection>>> getAllUrlWithCursor(
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "ASC") String direction) {
+        try {
+            // Validate direction parameter
+            CursorPageRequest.SortDirection sortDirection;
+            try {
+                sortDirection = CursorPageRequest.SortDirection.valueOf(direction.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("Invalid direction. Must be ASC or DESC", "INVALID_DIRECTION"));
+            }
+
+            // Validate limit
+            if (limit <= 0 || limit > 100) {
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("Limit must be between 1 and 100", "INVALID_LIMIT"));
+            }
+
+            CursorPageRequest cursorRequest = CursorPageRequest.of(cursor, limit, sortDirection);
+            CursorPageResponse<UrlProjection> response = urlManagementService.getAllUrlInfoWithCursor(cursorRequest);
+
+            return ResponseEntity.ok(ApiResponse.success(response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Internal server error", ErrorCode.SYSTEM_ERROR.toString()));

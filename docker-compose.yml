@@ -209,6 +209,81 @@ services:
       - mysql-net
       - shared-net
 
+  # Analytics Real-time Service
+  analytics-realtime-service:
+    build:
+      context: ./tinyUrlBackend/services/analystic-realtime-service
+      dockerfile: Dockerfile
+    container_name: analytics-realtime-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      NODE_ENV: production
+      PORT: 8082
+      # Database Configuration - MASTER (Write operations)
+      DB_MASTER_HOST: mysql-master
+      DB_MASTER_PORT: 3306
+      DB_MASTER_USERNAME: root
+      DB_MASTER_PASSWORD: root123
+      DB_MASTER_DATABASE: analytics_realtime_service
+      # Database Configuration - SLAVE (Read operations)
+      DB_SLAVE_HOST: mysql-slave
+      DB_SLAVE_PORT: 3306
+      DB_SLAVE_USERNAME: root
+      DB_SLAVE_PASSWORD: root123
+      DB_SLAVE_DATABASE: analytics_realtime_service
+      # Redis Configuration
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DATABASE: 2
+      REDIS_PASSWORD: ""
+      REDIS_TTL: 300
+      # Kafka Configuration
+      KAFKA_BROKERS: kafka-1:19092,kafka-2:19092,kafka-3:19092
+      KAFKA_CLIENT_ID: analytics-realtime-service
+      KAFKA_GROUP_ID: analytics-realtime-group
+      # External Services
+      URL_SERVICE_BASE_URL: http://url-service:8081
+      BATCH_SERVICE_BASE_URL: http://analytics-batch-service:8083
+      SERVICE_TIMEOUT: 5000
+      # API Gateway Configuration
+      API_GATEWAY_USER_ID_HEADER: X-User-Id
+      # Timezone Configuration
+      TZ: UTC
+      # Cache TTL Configuration (seconds)
+      CACHE_LOCATION_TTL: 3600
+      CACHE_DEVICE_TTL: 3600
+      CACHE_CLICK_STATS_TTL: 60
+      CACHE_USER_URLS_TTL: 300
+      # Real-time Configuration
+      WEBSOCKET_CORS_ORIGIN: "*"
+      WEBSOCKET_NAMESPACE: /analytics
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+      mysql-slave:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka-1:
+        condition: service_healthy
+      kafka-2:
+        condition: service_healthy
+      kafka-3:
+        condition: service_healthy
+      init-runner:
+        condition: service_completed_successfully
+    networks:
+      - shared-net
+      - mysql-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/api/v1/analytics/system"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
 volumes:
   kafka_data_1:
   kafka_data_2:

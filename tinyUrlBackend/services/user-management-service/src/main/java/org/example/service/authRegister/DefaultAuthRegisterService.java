@@ -3,6 +3,7 @@ package org.example.service.authRegister;
 import org.example.constants.ErrorCode;
 import org.example.entity.User;
 import org.example.repository.master.UserMasterRepository;
+import org.example.service.EmailVerification.EmailVerificationService;
 import org.example.service.data.*;
 import org.example.util.HashAndCompareUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class DefaultAuthRegisterService implements AuthRegisterService {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+
+    @Autowired
+    private EmailVerificationService emailVerificationService;
 
     @Override
     public RegisterOData register(RegisterIData input) {
@@ -80,16 +84,14 @@ public class DefaultAuthRegisterService implements AuthRegisterService {
 
     @Override
     public SendEmailToVerifyRegisterOData sendEmailToVerifyRegister(SendEmailToVerifyRegisterIData input) {
-        SendEmailToVerifyRegisterOData ret = new SendEmailToVerifyRegisterOData();
         try {
-            String token = generateToken(input.getUserId());
-
-            // TODO send email
-
-            ret.setErrCode(ErrorCode.SUCCESS);
-            return ret;
+            // Use EmailVerificationService to send verification email
+            return emailVerificationService.sendVerificationEmail(input);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            SendEmailToVerifyRegisterOData ret = new SendEmailToVerifyRegisterOData();
+            ret.setErrCode(ErrorCode.EMAIL_SEND_FAILED);
+            ret.setMessage("Failed to send verification email: " + e.getMessage());
+            return ret;
         }
     }
 
