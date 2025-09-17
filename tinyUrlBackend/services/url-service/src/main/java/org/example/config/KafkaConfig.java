@@ -71,7 +71,7 @@ public class KafkaConfig {
         
         // JSON deserializer settings
         configProps.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        configProps.put(JsonDeserializer.USE_TYPE_HEADERS, false);
+        configProps.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         configProps.put(JsonDeserializer.VALUE_DEFAULT_TYPE, "java.lang.Object");
         
         return new DefaultKafkaConsumerFactory<>(configProps);

@@ -74,7 +74,7 @@ public class DefaultEmailVerificationService implements EmailVerificationService
         
         try {
             String email = input.getEmail();
-            String userId = input.getUserId();
+            Long userId = input.getUserId();
             
             // Generate reset password token
             String token = generateSecureToken();
@@ -84,7 +84,7 @@ public class DefaultEmailVerificationService implements EmailVerificationService
             redisTemplate.opsForValue().set(redisKey, token, resetPasswordTokenTtl, TimeUnit.SECONDS);
             
             // Send email
-            sendResetPasswordEmailTemplate(email, token, userId);
+            sendResetPasswordEmailTemplate(email, token, userId.toString());
             
             result.setErrCode(ErrorCode.SUCCESS);
             result.setToken(token);

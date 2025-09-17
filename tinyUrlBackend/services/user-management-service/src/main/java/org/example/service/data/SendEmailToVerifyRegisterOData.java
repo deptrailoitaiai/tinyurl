@@ -12,4 +12,6 @@ import org.example.constants.ErrorCode;
 @Builder
 public class SendEmailToVerifyRegisterOData {
     private ErrorCode errCode;
+    private String token;
+    private String message;
 }

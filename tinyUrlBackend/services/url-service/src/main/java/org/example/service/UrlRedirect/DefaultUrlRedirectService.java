@@ -108,7 +108,7 @@ public class DefaultUrlRedirectService implements UrlRedirectService {
 
         // TODO: Track click event here for both password and non-password flows
         
-        ret.setOriginalUrl(cacheData.getOriginalUrl());
+        ret.setOriginUrl(cacheData.getOriginalUrl());
         ret.setErrorCode(ErrorCode.SUCCESS);
         return ret;
     }

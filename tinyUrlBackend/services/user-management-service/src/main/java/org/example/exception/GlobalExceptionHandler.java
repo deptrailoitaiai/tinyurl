@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setMessage("Internal server error: " + ex.getMessage());
-        response.setErrCode(ErrorCode.INTERNAL_SERVER_ERROR);
+        response.setErrorCode(ErrorCode.INTERNAL_SERVER_ERROR.name());
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setMessage(ex.getMessage());
-        response.setErrCode(ErrorCode.INVALID_INPUT);
+        response.setErrorCode(ErrorCode.INVALID_INPUT.name());
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setMessage("Runtime error: " + ex.getMessage());
-        response.setErrCode(ErrorCode.INTERNAL_SERVER_ERROR);
+        response.setErrorCode(ErrorCode.INTERNAL_SERVER_ERROR.name());
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
@@ -59,7 +59,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setMessage("Validation failed");
-        response.setErrCode(ErrorCode.INVALID_INPUT);
+        response.setErrorCode(ErrorCode.INVALID_INPUT.name());
         response.setData(errors);
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
@@ -70,7 +70,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setMessage("Constraint violation: " + ex.getMessage());
-        response.setErrCode(ErrorCode.INVALID_INPUT);
+        response.setErrorCode(ErrorCode.INVALID_INPUT.name());
         
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
@@ -80,7 +80,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setMessage(ex.getMessage());
-        response.setErrCode(ErrorCode.USER_NOT_FOUND);
+        response.setErrorCode(ErrorCode.USER_NOT_FOUND.name());
         
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
@@ -90,7 +90,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setMessage(ex.getMessage());
-        response.setErrCode(ErrorCode.INVALID_TOKEN);
+        response.setErrorCode(ErrorCode.INVALID_TOKEN.name());
         
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
     }
@@ -100,7 +100,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>();
         response.setSuccess(false);
         response.setMessage(ex.getMessage());
-        response.setErrCode(ErrorCode.EMAIL_ALREADY_EXISTS);
+        response.setErrorCode(ErrorCode.EMAIL_ALREADY_EXISTS.name());
         
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
