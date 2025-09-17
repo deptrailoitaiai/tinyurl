@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -39,27 +40,37 @@ public class BatchProcessingService {
         log.info("Starting daily statistics processing for date: {}", date);
 
         try {
-            // For now, we'll create a stub implementation
-            // TODO: Get URLs with clicks from realtime service
-            List<Long> urlsWithClicks = getUrlsWithClicksOnDate(date);
+            // Fetch click events from realtime service using Kafka
+            List<ClickEventDto> clickEvents = externalServiceClient.fetchClickEventsFromRealtimeService(date)
+                .get(30, java.util.concurrent.TimeUnit.SECONDS); // Wait max 30 seconds for bulk data
             
-            log.info("Found {} URLs with clicks on {}", urlsWithClicks.size(), date);
+            log.info("Fetched {} click events for date {} from realtime service", clickEvents.size(), date);
 
-            for (Long urlId : urlsWithClicks) {
+            // Group events by URL ID
+            Map<Long, List<ClickEventDto>> eventsByUrl = clickEvents.stream()
+                .collect(java.util.stream.Collectors.groupingBy(ClickEventDto::getUrlId));
+
+            log.info("Found {} URLs with clicks on {}", eventsByUrl.size(), date);
+
+            for (Map.Entry<Long, List<ClickEventDto>> entry : eventsByUrl.entrySet()) {
+                Long urlId = entry.getKey();
+                List<ClickEventDto> urlEvents = entry.getValue();
+                
                 try {
-                    processUrlDailyStats(urlId, date);
+                    processUrlDailyStats(urlId, date, urlEvents);
                 } catch (Exception e) {
                     log.error("Error processing stats for URL {} on date {}: {}", urlId, date, e.getMessage(), e);
                     // Continue with other URLs even if one fails
                 }
             }
 
-            log.info("Completed daily statistics processing for date: {}", date);
-
-            // Invalidate analytics cache after successful processing
+            // Clear cache after batch processing
             cacheManagementService.invalidateAllAnalyticsCache();
             log.info("Invalidated analytics cache after batch processing");
 
+        } catch (java.util.concurrent.TimeoutException e) {
+            log.error("Timeout fetching click events from realtime service for date {}", date, e);
+            throw new RuntimeException("Failed to fetch click events - service timeout");
         } catch (Exception e) {
             log.error("Failed to process daily statistics for date {}: {}", date, e.getMessage(), e);
             throw e;
@@ -67,11 +78,11 @@ public class BatchProcessingService {
     }
 
     /**
-     * Process statistics for a specific URL on a specific date
+     * Process statistics for a specific URL on a specific date with provided click events
      */
     @Transactional("masterTransactionManager")
-    public void processUrlDailyStats(Long urlId, LocalDate date) {
-        log.debug("Processing stats for URL {} on date {}", urlId, date);
+    public void processUrlDailyStats(Long urlId, LocalDate date, List<ClickEventDto> clickEvents) {
+        log.debug("Processing stats for URL {} on date {} with {} events", urlId, date, clickEvents.size());
 
         // Get or create daily stats record
         UrlDailyStats dailyStats = getOrCreateDailyStats(urlId, date);
@@ -79,9 +90,11 @@ public class BatchProcessingService {
         // Get last processed click ID
         Long lastProcessedClickId = dailyStats.getLastProcessedClickId();
         
-        // Get new click events from realtime service
-        // TODO: Replace with actual API call to realtime service
-        List<ClickEventDto> newClicks = getNewClickEvents(urlId, date, lastProcessedClickId);
+        // Filter events that haven't been processed yet
+        List<ClickEventDto> newClicks = clickEvents.stream()
+            .filter(event -> lastProcessedClickId == null || event.getId() > lastProcessedClickId)
+            .sorted((e1, e2) -> Long.compare(e1.getId(), e2.getId())) // Sort by ID to ensure proper ordering
+            .collect(java.util.stream.Collectors.toList());
         
         if (!newClicks.isEmpty()) {
             // Update statistics

@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "URL Ownership Verification Response",
+  "description": "Schema for URL ownership verification responses",
+  "type": "object",
+  "properties": {
+    "correlationId": {
+      "type": "string",
+      "description": "Correlation ID from the request"
+    },
+    "urlId": {
+      "type": "string",
+      "description": "URL ID that was verified"
+    },
+    "userId": {
+      "type": "string",
+      "description": "User ID that was checked"
+    },
+    "isOwner": {
+      "type": "boolean",
+      "description": "Whether the user owns the URL"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Response timestamp"
+    },
+    "error": {
+      "type": ["string", "null"],
+      "description": "Error message if verification failed"
+    }
+  },
+  "required": ["correlationId", "urlId", "userId", "isOwner", "timestamp"]
+}

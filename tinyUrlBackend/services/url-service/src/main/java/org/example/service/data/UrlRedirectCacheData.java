@@ -15,6 +15,7 @@ import org.example.entity.Url;
 @AllArgsConstructor
 @Builder
 public class UrlRedirectCacheData {
+    private Long urlId;
     private String shortCode;
     private String originalUrl;
     private String passwordHash;
@@ -25,6 +26,7 @@ public class UrlRedirectCacheData {
      */
     public static UrlRedirectCacheData fromUrl(Url url, String shortCode) {
         return UrlRedirectCacheData.builder()
+                .urlId(url.getId())
                 .shortCode(shortCode)
                 .originalUrl(url.getOriginalUrl())
                 .passwordHash(url.getPasswordHash())

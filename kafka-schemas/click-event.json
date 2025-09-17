@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Click Event",
+  "description": "Schema for URL click tracking events",
+  "type": "object",
+  "properties": {
+    "urlId": {
+      "type": "string",
+      "description": "Unique identifier for the URL"
+    },
+    "shortCode": {
+      "type": "string", 
+      "description": "Short code of the URL"
+    },
+    "userId": {
+      "type": ["string", "null"],
+      "description": "User ID if authenticated, null for anonymous"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO8601 timestamp of the click"
+    },
+    "ipAddress": {
+      "type": "string",
+      "description": "IP address of the user"
+    },
+    "userAgent": {
+      "type": "string",
+      "description": "User agent string"
+    },
+    "referrer": {
+      "type": ["string", "null"],
+      "description": "Referrer URL if available"
+    },
+    "correlationId": {
+      "type": "string",
+      "description": "Unique correlation ID for tracking"
+    },
+    "location": {
+      "type": "object",
+      "properties": {
+        "country": {"type": "string"},
+        "city": {"type": "string"},
+        "region": {"type": "string"}
+      }
+    }
+  },
+  "required": ["urlId", "shortCode", "timestamp", "ipAddress", "userAgent", "correlationId"]
+}

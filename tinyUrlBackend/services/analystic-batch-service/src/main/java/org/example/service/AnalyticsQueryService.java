@@ -35,9 +35,20 @@ public class AnalyticsQueryService {
     public List<UrlAnalyticsDto> getUrlAnalytics(Long urlId, LocalDate startDate, LocalDate endDate, Long userId) {
         log.debug("Getting analytics for URL {} from {} to {} for user {}", urlId, startDate, endDate, userId);
 
-        // Verify URL ownership (stub for now)
-        if (!externalServiceClient.verifyUrlOwnership(urlId, userId)) {
-            throw new SecurityException("User does not own this URL");
+        try {
+            // Verify URL ownership using async Kafka request
+            boolean isOwner = externalServiceClient.verifyUrlOwnership(String.valueOf(urlId), String.valueOf(userId))
+                .get(10, java.util.concurrent.TimeUnit.SECONDS); // Wait max 10 seconds
+            
+            if (!isOwner) {
+                throw new SecurityException("User does not own this URL");
+            }
+        } catch (java.util.concurrent.TimeoutException e) {
+            log.error("Timeout verifying URL ownership for URL {} and user {}", urlId, userId);
+            throw new RuntimeException("Unable to verify URL ownership - service timeout");
+        } catch (Exception e) {
+            log.error("Error verifying URL ownership for URL {} and user {}", urlId, userId, e);
+            throw new RuntimeException("Unable to verify URL ownership");
         }
 
         // Check if URL has any analytics data
@@ -79,9 +90,20 @@ public class AnalyticsQueryService {
     public UrlAnalyticsDto getUrlAnalyticsSummary(Long urlId, Long userId) {
         log.debug("Getting analytics summary for URL {} for user {}", urlId, userId);
 
-        // Verify URL ownership
-        if (!externalServiceClient.verifyUrlOwnership(urlId, userId)) {
-            throw new SecurityException("User does not own this URL");
+        try {
+            // Verify URL ownership using async Kafka request
+            boolean isOwner = externalServiceClient.verifyUrlOwnership(String.valueOf(urlId), String.valueOf(userId))
+                .get(10, java.util.concurrent.TimeUnit.SECONDS); // Wait max 10 seconds
+            
+            if (!isOwner) {
+                throw new SecurityException("User does not own this URL");
+            }
+        } catch (java.util.concurrent.TimeoutException e) {
+            log.error("Timeout verifying URL ownership for URL {} and user {}", urlId, userId);
+            throw new RuntimeException("Unable to verify URL ownership - service timeout");
+        } catch (Exception e) {
+            log.error("Error verifying URL ownership for URL {} and user {}", urlId, userId, e);
+            throw new RuntimeException("Unable to verify URL ownership");
         }
 
         // Get all daily stats for this URL

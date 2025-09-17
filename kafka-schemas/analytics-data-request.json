@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Analytics Data Request",
+  "description": "Schema for analytics data requests",
+  "type": "object",
+  "properties": {
+    "correlationId": {
+      "type": "string",
+      "description": "Unique correlation ID for request-reply pattern"
+    },
+    "requestType": {
+      "type": "string",
+      "enum": ["URLS_WITH_CLICKS", "CLICK_EVENTS"],
+      "description": "Type of data being requested"
+    },
+    "date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date for which data is requested (YYYY-MM-DD)"
+    },
+    "urlId": {
+      "type": ["string", "null"],
+      "description": "Specific URL ID (for CLICK_EVENTS requests)"
+    },
+    "afterClickId": {
+      "type": ["string", "null"],
+      "description": "Get clicks after this ID (for incremental updates)"
+    },
+    "replyTo": {
+      "type": "string",
+      "description": "Topic to send response to"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Request timestamp"
+    }
+  },
+  "required": ["correlationId", "requestType", "date", "replyTo", "timestamp"]
+}

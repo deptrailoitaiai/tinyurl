@@ -17,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/api/url")
 public class UrlController {
@@ -322,6 +324,100 @@ public class UrlController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Internal server error", ErrorCode.SYSTEM_ERROR.toString()));
         }
+    }
+
+    /**
+     * Redirect with analytics tracking - captures user information
+     * This endpoint should be used by the frontend for actual redirects
+     */
+    @PostMapping("/{shortCode}/track")
+    public ResponseEntity<ApiResponse<RedirectResponse>> redirectWithTracking(
+            @PathVariable String shortCode,
+            @RequestBody(required = false) RedirectRequest request,
+            @RequestHeader(value = "X-User-Id", required = false) String userId,
+            @RequestHeader(value = "X-Real-IP", required = false) String realIp,
+            @RequestHeader(value = "User-Agent", required = false) String userAgent,
+            @RequestHeader(value = "Referer", required = false) String referer,
+            HttpServletRequest httpRequest) {
+        try {
+            // Extract IP address
+            String ipAddress = realIp;
+            if (ipAddress == null) {
+                ipAddress = getClientIpAddress(httpRequest);
+            }
+
+            // Convert to service input data
+            RedirectWithTrackingIData inputData = RedirectWithTrackingIData.builder()
+                    .shortCode(shortCode)
+                    .password(request != null ? request.getPassword() : null)
+                    .userId(userId)
+                    .ipAddress(ipAddress)
+                    .userAgent(userAgent != null ? userAgent : "Unknown")
+                    .referrer(referer)
+                    .build();
+
+            // Call service
+            RedirectWithTrackingOData outputData = urlRedirectService.redirectWithTracking(inputData);
+
+            // Handle specific cases
+            if (outputData.getErrorCode() == ErrorCode.PASSWORD_REQUIRED) {
+                RedirectResponse response = RedirectResponse.builder()
+                        .passwordRequired(true)
+                        .shortCode(outputData.getShortCode())
+                        .build();
+                return ResponseEntity.ok(ApiResponse.success("Password required", response));
+            }
+
+            // Handle other error cases
+            if (outputData.getErrorCode() != ErrorCode.SUCCESS) {
+                return ResponseEntity.status(getHttpStatus(outputData.getErrorCode()))
+                        .body(ApiResponse.error(getErrorMessage(outputData.getErrorCode()),
+                                outputData.getErrorCode().toString()));
+            }
+
+            // Success case - return original URL for frontend to redirect
+            RedirectResponse response = RedirectResponse.builder()
+                    .originalUrl(outputData.getOriginalUrl())
+                    .passwordRequired(false)
+                    .shortCode(shortCode)
+                    .correlationId(outputData.getCorrelationId())
+                    .build();
+
+            return ResponseEntity.ok(ApiResponse.success("Redirect URL retrieved and tracked", response));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Internal server error", ErrorCode.SYSTEM_ERROR.toString()));
+        }
+    }
+
+    /**
+     * Extract client IP address from request
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+        String[] headerNames = {
+            "X-Forwarded-For",
+            "X-Real-IP", 
+            "Proxy-Client-IP",
+            "WL-Proxy-Client-IP",
+            "HTTP_X_FORWARDED_FOR",
+            "HTTP_X_FORWARDED",
+            "HTTP_X_CLUSTER_CLIENT_IP",
+            "HTTP_CLIENT_IP",
+            "HTTP_FORWARDED_FOR",
+            "HTTP_FORWARDED",
+            "HTTP_VIA",
+            "REMOTE_ADDR"
+        };
+
+        for (String headerName : headerNames) {
+            String ip = request.getHeader(headerName);
+            if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+                return ip.split(",")[0].trim(); // Take first IP if multiple
+            }
+        }
+
+        return request.getRemoteAddr();
     }
 
     /**

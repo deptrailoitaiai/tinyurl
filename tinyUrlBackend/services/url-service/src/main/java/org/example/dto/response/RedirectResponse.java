@@ -13,4 +13,5 @@ public class RedirectResponse {
     private String originalUrl;
     private boolean passwordRequired;
     private String shortCode;
+    private String correlationId; // For tracking click events
 }

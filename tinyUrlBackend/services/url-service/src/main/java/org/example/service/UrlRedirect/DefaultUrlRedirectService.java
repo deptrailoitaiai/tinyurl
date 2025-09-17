@@ -5,6 +5,7 @@ import org.example.entity.Url;
 import org.example.repository.slave.UrlSlaveRepository;
 import org.example.service.UrlRedirect.UrlRedirectService;
 import org.example.service.data.*;
+import org.example.service.kafka.ClickTrackingService;
 import org.example.util.Base62Util;
 import org.example.util.HashAndCompareUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +24,9 @@ public class DefaultUrlRedirectService implements UrlRedirectService {
 
     @Autowired
     private UrlSlaveRepository urlSlaveRepository;
+    
+    @Autowired
+    private ClickTrackingService clickTrackingService;
 
     @Override
     public RedirectWithPasswordOData redirectWithPassword(RedirectWithPasswordIData inputData) {
@@ -102,10 +106,63 @@ public class DefaultUrlRedirectService implements UrlRedirectService {
             return ret;
         }
 
-        // TODO: send request to analytics service
-
-        ret.setOriginUrl(cacheData.getOriginalUrl());
+        // TODO: Track click event here for both password and non-password flows
+        
+        ret.setOriginalUrl(cacheData.getOriginalUrl());
         ret.setErrorCode(ErrorCode.SUCCESS);
+        return ret;
+    }
+
+    @Override
+    public RedirectWithTrackingOData redirectWithTracking(RedirectWithTrackingIData inputData) {
+        RedirectWithTrackingOData ret = new RedirectWithTrackingOData();
+
+        // Try to get from cache first
+        UrlRedirectCacheData cachedData = getCachedRedirectInfo(inputData.getShortCode());
+        if (cachedData == null) {
+            // Cache miss - fetch from database
+            Long urlId = Base62Util.base62ToId(inputData.getShortCode());
+            Optional<Url> optionalUrl = urlSlaveRepository.findById(urlId);
+
+            if (optionalUrl.isEmpty()) {
+                ret.setErrorCode(ErrorCode.URL_NOT_FOUND);
+                return ret;
+            }
+
+            Url url = optionalUrl.get();
+            cachedData = UrlRedirectCacheData.fromUrl(url, inputData.getShortCode());
+            cacheRedirectInfo(inputData.getShortCode(), cachedData);
+        }
+
+        // Check URL status
+        if (!cachedData.isAvailableForRedirect()) {
+            ret.setErrorCode((cachedData.getStatus() == Url.UrlStatus.EXPIRED) ? ErrorCode.URL_EXPIRED : ErrorCode.URL_DISABLED);
+            return ret;
+        }
+
+        // Check if URL requires password
+        if (cachedData.isPasswordProtected()) {
+            if (inputData.getPassword() == null || 
+                !HashAndCompareUtil.compare(inputData.getPassword(), cachedData.getPasswordHash())) {
+                ret.setErrorCode(ErrorCode.PASSWORD_REQUIRED);
+                ret.setShortCode(inputData.getShortCode());
+                return ret;
+            }
+        }
+
+        // Track click event asynchronously
+        String correlationId = clickTrackingService.trackClick(
+            cachedData.getUrlId().toString(),
+            inputData.getShortCode(),
+            inputData.getUserId(),
+            inputData.getIpAddress(),
+            inputData.getUserAgent(),
+            inputData.getReferrer()
+        );
+
+        ret.setErrorCode(ErrorCode.SUCCESS);
+        ret.setOriginalUrl(cachedData.getOriginalUrl());
+        ret.setCorrelationId(correlationId);
         return ret;
     }
 
