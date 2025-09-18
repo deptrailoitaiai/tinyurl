@@ -5,6 +5,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.dto.kafka.UrlOwnershipRequest;
 import org.example.dto.kafka.UrlOwnershipResponse;
 import org.example.service.UrlManagement.UrlManagementService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -21,8 +23,11 @@ import java.time.ZoneOffset;
 @RequiredArgsConstructor
 public class UrlOwnershipVerificationService {
     
-    private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final UrlManagementService urlManagementService;
+    private KafkaTemplate<String, Object> kafkaTemplate;
+
+    @Autowired
+    @Qualifier("DefaultUrlManagementService")
+    private UrlManagementService urlManagementService;
     
     @Value("${kafka.topics.url-ownership-responses:url.ownership.responses}")
     private String ownershipResponsesTopic;

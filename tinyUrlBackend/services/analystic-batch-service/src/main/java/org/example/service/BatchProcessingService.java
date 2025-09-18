@@ -16,6 +16,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 /**
  * Core service for batch processing click events into daily statistics
@@ -36,7 +37,7 @@ public class BatchProcessingService {
      * This method is called by the scheduled job
      */
     @Transactional("masterTransactionManager")
-    public void processDailyStats(LocalDate date) {
+    public void processDailyStats(LocalDate date) throws ExecutionException, InterruptedException {
         log.info("Starting daily statistics processing for date: {}", date);
 
         try {

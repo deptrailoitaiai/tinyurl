@@ -51,7 +51,7 @@ public class DailyAnalyticsScheduler {
      * Manual trigger for processing a specific date
      * This can be called via JMX or other management interface
      */
-    public void processSpecificDate(LocalDate date) {
+    public void processSpecificDate(LocalDate date) throws Exception {
         log.info("=== Starting manual analytics processing for {} ===", date);
         
         try {
